@@ -1,42 +1,37 @@
-import React, { useState } from 'react';
-import type { AssetCategory } from '../../types';
+import React from 'react';
+import type { AssetCategory, Permission } from '../types';
+import GenericManagementPage from '../components/GenericManagementPage';
 
-// Interface mais explícita
-interface AssetCategoryFormProps {
-    item: Partial<AssetCategory>;
-    onSave: (category: AssetCategory) => void;
-    onCancel: () => void;
+interface AssetCategoriesPageProps {
+    categories: AssetCategory[];
+    onAdd: () => void;
+    onEdit: (id: string) => void;
+    onDelete: (id: string) => void;
+    hasPermission: (p: Permission) => boolean;
+    setActivePage: (page: string) => void;
 }
 
-// Correção: Tipar explicitamente as props na função
-const AssetCategoryForm = ({ item, onSave, onCancel }: AssetCategoryFormProps) => {
-    const [category, setCategory] = useState<Partial<AssetCategory>>(item);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave(category as AssetCategory);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setCategory((prev: Partial<AssetCategory>) => ({...prev, name: e.target.value}));
-    };
-
+// Removido React.FC e tipado diretamente
+const AssetCategoriesPage = ({ categories, onAdd, onEdit, onDelete, hasPermission, setActivePage }: AssetCategoriesPageProps) => {
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <input 
-                name="name" 
-                value={category.name || ''} 
-                onChange={handleChange}
-                placeholder="Nome da Categoria" 
-                required 
-                className="form-input"
-            />
-            <div className="flex justify-end gap-4 pt-4" style={{borderTop: '1px solid var(--color-border)'}}>
-                <button type="button" onClick={onCancel} className="btn btn-ghost">Cancelar</button>
-                <button type="submit" className="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+        <GenericManagementPage<AssetCategory>
+            title="Categorias de Património"
+            items={categories}
+            onAdd={onAdd}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            hasPermission={hasPermission}
+            permissionPrefix="assets"
+            customHeaderButtons={
+                <button onClick={() => setActivePage('assets')} className="btn bg-slate-600 hover:bg-slate-500">
+                    Voltar para Património
+                </button>
+            }
+            renderItem={(item: AssetCategory) => (
+                <p className="font-bold text-lg text-white">{item.name}</p>
+            )}
+        />
     );
 };
 
-export default AssetCategoryForm;
+export default AssetCategoriesPage;

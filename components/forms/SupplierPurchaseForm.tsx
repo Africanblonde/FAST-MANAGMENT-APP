@@ -9,6 +9,7 @@ interface SupplierPurchaseFormProps {
     preselectedSupplierId: string | null;
 }
 
+// ✅ Tipar o estado
 interface PurchaseState {
     supplierId: string;
     description: string;
@@ -18,13 +19,8 @@ interface PurchaseState {
     paymentMethod: string;
 }
 
-const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({ 
-    onSave, 
-    onCancel, 
-    suppliers, 
-    paymentMethods, 
-    preselectedSupplierId 
-}: SupplierPurchaseFormProps) => {
+// Removido React.FC e tipado diretamente
+const SupplierPurchaseForm = ({ onSave, onCancel, suppliers, paymentMethods, preselectedSupplierId }: SupplierPurchaseFormProps) => {
     const [purchase, setPurchase] = useState<PurchaseState>({
         supplierId: preselectedSupplierId || '',
         description: '',
@@ -35,14 +31,16 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({
     });
 
     useEffect(() => {
-        if(preselectedSupplierId) {
-            setPurchase((prev: PurchaseState) => ({...prev, supplierId: preselectedSupplierId}));
+        if (preselectedSupplierId) {
+            // ✅ Tipar 'prev' explicitamente
+            setPurchase((prev: PurchaseState) => ({ ...prev, supplierId: preselectedSupplierId }));
         }
     }, [preselectedSupplierId]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setPurchase((prev: PurchaseState) => ({
+        // ✅ Tipar 'prev' explicitamente
+        setPurchase((prev: PurchaseState) => ({ 
             ...prev, 
             [name]: name === 'amount' ? parseFloat(value) || 0 : value 
         }));
@@ -50,7 +48,7 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if(!purchase.supplierId || !purchase.description || purchase.amount <= 0) {
+        if (!purchase.supplierId || !purchase.description || purchase.amount <= 0) {
             alert("Por favor, preencha todos os campos obrigatórios.");
             return;
         }
@@ -59,16 +57,18 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-             <select 
-                 name="supplierId" 
-                 value={purchase.supplierId} 
-                 onChange={handleChange} 
-                 required 
-                 className="form-select" 
-                 disabled={!!preselectedSupplierId}
-             >
+            <select 
+                name="supplierId" 
+                value={purchase.supplierId} 
+                onChange={handleChange} 
+                required 
+                className="form-select" 
+                disabled={!!preselectedSupplierId}
+            >
                 <option value="">Selecione o Fornecedor</option>
-                {suppliers.map((s: Supplier) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {suppliers.map((s: Supplier) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
             </select>
             <input 
                 name="description" 
@@ -82,7 +82,7 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({
                 name="amount" 
                 type="number" 
                 step="0.01" 
-                value={purchase.amount ?? ''} 
+                value={purchase.amount || ''} 
                 onChange={handleChange} 
                 placeholder="Valor Total" 
                 required 

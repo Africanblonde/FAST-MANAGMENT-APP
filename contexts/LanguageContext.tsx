@@ -1,65 +1,37 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
-export type Language = 'pt' | 'en' | 'es' | 'ar';
+// Define the missing types
+interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+  decimalDigits: number;
+}
+
+type CurrencyCode = 'MZN' | 'USD' | 'EUR' | 'BRL';
+type Language = 'pt' | 'en' | 'es' | 'ar';
+
+// Define the currencies constant
+const CURRENCIES: Record<CurrencyCode, Currency> = {
+  MZN: { code: 'MZN', symbol: 'MT', name: 'Metical', decimalDigits: 2 },
+  USD: { code: 'USD', symbol: '$', name: 'US Dollar', decimalDigits: 2 },
+  EUR: { code: 'EUR', symbol: '€', name: 'Euro', decimalDigits: 2 },
+  BRL: { code: 'BRL', symbol: 'R$', name: 'Brazilian Real', decimalDigits: 2 },
+};
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  currency: Currency;
+  setCurrency: (currencyCode: CurrencyCode) => void;
   t: (key: string, params?: Record<string, string>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-};
-
 interface LanguageProviderProps {
   children: ReactNode;
 }
-
-export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }: LanguageProviderProps) => {
-  const [language, setLanguageState] = useState<Language>('pt');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage) {
-      setLanguageState(savedLanguage);
-    }
-  }, []);
-
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    localStorage.setItem('language', lang);
-    
-    // Set document direction for Arabic
-    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    document.documentElement.lang = lang;
-  };
-
-  const t = (key: string, params?: Record<string, string>) => {
-    const translations = getTranslations(language);
-    let translation = getNestedValue(translations, key) || key;
-    
-    if (params) {
-      Object.keys(params).forEach(param => {
-        translation = translation.replace(`{{${param}}}`, params[param]);
-      });
-    }
-    
-    return translation;
-  };
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
-      {children}
-    </LanguageContext.Provider>
-  );
-};
 
 const getNestedValue = (obj: any, key: string): string => {
   return key.split('.').reduce((o, k) => o?.[k], obj);
@@ -80,6 +52,62 @@ const getTranslations = (lang: Language) => {
   }
 };
 
+export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+  const [language, setLanguageState] = useState<Language>('pt');
+  const [currency, setCurrencyState] = useState<Currency>(CURRENCIES.MZN);
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as Language;
+    if (savedLanguage) {
+      setLanguageState(savedLanguage);
+    }
+  }, []);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('language', lang);
+    
+    // Set document direction for Arabic
+    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+  };
+
+  const setCurrency = (currencyCode: CurrencyCode) => {
+    const newCurrency = CURRENCIES[currencyCode];
+    if (newCurrency) {
+      setCurrencyState(newCurrency);
+    }
+  };
+
+  const t = (key: string, params?: Record<string, string>) => {
+    const translations = getTranslations(language);
+    let translation = getNestedValue(translations, key) || key;
+    
+    if (params) {
+      Object.keys(params).forEach(param => {
+        translation = translation.replace(`{{${param}}}`, params[param]);
+      });
+    }
+    
+    return translation;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, currency, setCurrency, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = (): LanguageContextType => {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+// Translation objects
 const ptTranslations = {
   common: {
     save: 'Guardar',
