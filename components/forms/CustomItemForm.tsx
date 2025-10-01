@@ -5,7 +5,7 @@ interface CustomItemFormProps {
     onCancel: () => void;
 }
 
-const CustomItemForm: React.FC<CustomItemFormProps> = ({ onSave, onCancel }) => {
+const CustomItemForm = ({ onSave, onCancel }: CustomItemFormProps) => {
     const [item, setItem] = useState({
         type: 'service' as 'service' | 'part',
         description: '',
@@ -14,7 +14,7 @@ const CustomItemForm: React.FC<CustomItemFormProps> = ({ onSave, onCancel }) => 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setItem(prev => ({ ...prev, [name]: value }));
+        setItem((prev: typeof item) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {

@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 
 interface QuickClientFormProps {
@@ -7,14 +5,14 @@ interface QuickClientFormProps {
     onCancel: () => void;
 }
 
-const QuickClientForm: React.FC<QuickClientFormProps> = ({ onSave, onCancel }) => {
+const QuickClientForm: React.FC<QuickClientFormProps> = ({ onSave, onCancel }: QuickClientFormProps) => {
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', contact: '', model: '', licensePlate: ''
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({...prev, [name]: value}));
+        setFormData((prev: typeof formData) => ({...prev, [name]: value}));
     };
     
     const handleSubmit = (e: React.FormEvent) => {
@@ -41,7 +39,7 @@ const QuickClientForm: React.FC<QuickClientFormProps> = ({ onSave, onCancel }) =
                 <h3 className="text-lg font-semibold text-white mb-3">Dados da Viatura</h3>
                 <div className="space-y-4">
                     <input name="model" value={formData.model} onChange={handleChange} placeholder="Marca e Modelo" required className="w-full p-2 bg-slate-700 rounded"/>
-                    <input name="licensePlate" value={formData.licensePlate} onChange={e => setFormData(prev => ({...prev, licensePlate: e.target.value.toUpperCase()}))} placeholder="Matrícula" required className="w-full p-2 bg-slate-700 rounded"/>
+                    <input name="licensePlate" value={formData.licensePlate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData((prev: typeof formData) => ({...prev, licensePlate: e.target.value.toUpperCase()}))} placeholder="Matrícula" required className="w-full p-2 bg-slate-700 rounded"/>
                 </div>
             </div>
             <div className="flex justify-end gap-4 pt-4 border-t border-slate-700">

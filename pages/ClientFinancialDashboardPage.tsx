@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, ChangeEvent } from 'react';
 import type { Client, Invoice, PaymentMethod, InvoiceStatus } from '../types';
 import { formatCurrency, getInvoiceStatusAndBalance, exportToCsv } from '../utils/helpers';
 import { ICONS } from '../constants';
@@ -20,7 +20,11 @@ type FormattedInvoice = {
     raw: Invoice;
 };
 
-const StatusBadge: React.FC<{ status: InvoiceStatus }> = ({ status }) => {
+interface StatusBadgeProps {
+    status: InvoiceStatus;
+}
+
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status }: StatusBadgeProps) => {
     const statusStyles: Record<InvoiceStatus, React.CSSProperties> = {
         'Pago': { backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)' },
         'Pago Parcialmente': { backgroundColor: 'hsla(217, 91%, 60%, 0.1)', color: 'var(--color-secondary)' },
@@ -28,28 +32,44 @@ const StatusBadge: React.FC<{ status: InvoiceStatus }> = ({ status }) => {
         'Atrasado': { backgroundColor: 'hsla(0, 84%, 60%, 0.1)', color: 'var(--color-danger)' },
         'Anulada': { backgroundColor: 'hsla(215, 16%, 55%, 0.1)', color: 'var(--color-text-tertiary)' },
     };
-    return <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '9999px', ...statusStyles[status] }}>{status}</span>;
+    
+    const style = statusStyles[status] || {};
+    
+    return <span style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, borderRadius: '9999px', ...style }}>{status}</span>;
 };
 
-
-const ClientFinancialDashboardPage: React.FC<{
+interface ClientFinancialDashboardPageProps {
     client: Client;
     allInvoices: Invoice[];
     paymentMethods: PaymentMethod[];
     onClose: () => void;
     onRegisterPayment: (invoiceId: string) => void;
     onViewInvoice: (invoiceId: string, isCollection: boolean) => void;
-}> = ({ client, allInvoices, onClose, onRegisterPayment, onViewInvoice }) => {
+}
+
+const ClientFinancialDashboardPage: React.FC<ClientFinancialDashboardPageProps> = (props: ClientFinancialDashboardPageProps) => {
+    const { 
+        client, 
+        allInvoices, 
+        onClose, 
+        onRegisterPayment, 
+        onViewInvoice 
+    } = props;
     
-    const [filters, setFilters] = useState({ startDate: '', endDate: '', status: '', searchQuery: '' });
+    const [filters, setFilters] = useState({ 
+        startDate: '', 
+        endDate: '', 
+        status: '', 
+        searchQuery: '' 
+    });
     const [sortConfig, setSortConfig] = useState<SortConfig>({ key: 'date', direction: 'descending' });
 
     const clientInvoices = useMemo(
         () => allInvoices
-            .filter(inv => inv.clientId === client.id)
-            .map(inv => {
+            .filter((inv: Invoice) => inv.clientId === client.id)
+            .map((inv: Invoice) => {
                 const { status, balance, totalPaid } = getInvoiceStatusAndBalance(inv);
-                const description = inv.items.map(i => i.description).join(', ') || 'Fatura de serviços/peças';
+                const description = inv.items.map((i: any) => i.description).join(', ') || 'Fatura de serviços/peças';
                 return {
                     date: inv.issueDate,
                     docNumber: inv.display_id || `...${inv.id.slice(-6)}`,
@@ -66,8 +86,8 @@ const ClientFinancialDashboardPage: React.FC<{
     );
 
     const summaryStats = useMemo(() => {
-        const totalFaturado = clientInvoices.reduce((sum, inv) => sum + inv.total, 0);
-        const totalRecebido = clientInvoices.reduce((sum, inv) => sum + inv.paid, 0);
+        const totalFaturado = clientInvoices.reduce((sum: number, inv: FormattedInvoice) => sum + inv.total, 0);
+        const totalRecebido = clientInvoices.reduce((sum: number, inv: FormattedInvoice) => sum + inv.paid, 0);
         return {
             totalFaturado,
             totalRecebido,
@@ -80,29 +100,34 @@ const ClientFinancialDashboardPage: React.FC<{
 
         if (filters.searchQuery) {
             const query = filters.searchQuery.toLowerCase();
-            filtered = filtered.filter(inv => 
+            filtered = filtered.filter((inv: FormattedInvoice) => 
                 inv.docNumber.toLowerCase().includes(query) || 
                 inv.description.toLowerCase().includes(query)
             );
         }
 
         if (filters.status) {
-            filtered = filtered.filter(inv => inv.status === filters.status);
+            filtered = filtered.filter((inv: FormattedInvoice) => inv.status === filters.status);
         }
         
         if (filters.startDate) {
-            filtered = filtered.filter(inv => new Date(inv.date) >= new Date(filters.startDate));
+            filtered = filtered.filter((inv: FormattedInvoice) => new Date(inv.date) >= new Date(filters.startDate));
         }
 
         if (filters.endDate) {
             const endDate = new Date(filters.endDate);
             endDate.setHours(23, 59, 59, 999);
-            filtered = filtered.filter(inv => new Date(inv.date) <= endDate);
+            filtered = filtered.filter((inv: FormattedInvoice) => new Date(inv.date) <= endDate);
         }
 
-        filtered.sort((a, b) => {
-            const aValue = a[sortConfig.key];
-            const bValue = b[sortConfig.key];
+        filtered.sort((a: FormattedInvoice, b: FormattedInvoice) => {
+            // Função auxiliar para obter valor de forma type-safe
+            const getValue = (item: FormattedInvoice, key: keyof FormattedInvoice): string | number => {
+                return item[key] as string | number;
+            };
+        
+            const aValue = getValue(a, sortConfig.key);
+            const bValue = getValue(b, sortConfig.key);
             
             if (aValue < bValue) {
                 return sortConfig.direction === 'ascending' ? -1 : 1;
@@ -125,7 +150,7 @@ const ClientFinancialDashboardPage: React.FC<{
     };
 
     const handleExport = () => {
-        const dataToExport = processedInvoices.map(inv => ({
+        const dataToExport = processedInvoices.map((inv: FormattedInvoice) => ({
             'Data': new Date(inv.date).toLocaleDateString(),
             'Nº Documento': inv.docNumber,
             'Tipo': inv.type,
@@ -148,6 +173,22 @@ const ClientFinancialDashboardPage: React.FC<{
         { key: 'balance', label: 'Saldo Devedor', isNumeric: true },
         { key: 'status', label: 'Estado' },
     ];
+
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setFilters((f: any) => ({...f, searchQuery: e.target.value}));
+    };
+
+    const handleStatusChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setFilters((f: any) => ({...f, status: e.target.value}));
+    };
+
+    const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setFilters((f: any) => ({...f, startDate: e.target.value}));
+    };
+
+    const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setFilters((f: any) => ({...f, endDate: e.target.value}));
+    };
     
     return (
         <div className="fixed inset-0 bg-background z-40 flex flex-col p-4 sm:p-6 lg:p-8 animate-fade-in">
@@ -170,16 +211,16 @@ const ClientFinancialDashboardPage: React.FC<{
             
             <section className="card flex-shrink-0 p-4 mb-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <input type="text" placeholder="Pesquisar..." value={filters.searchQuery} onChange={e => setFilters(f => ({...f, searchQuery: e.target.value}))} className="form-input" />
-                    <select value={filters.status} onChange={e => setFilters(f => ({...f, status: e.target.value as InvoiceStatus}))} className="form-select">
+                    <input type="text" placeholder="Pesquisar..." value={filters.searchQuery} onChange={handleSearchChange} className="form-input" />
+                    <select value={filters.status} onChange={handleStatusChange} className="form-select">
                         <option value="">Todos Estados</option>
                         <option value="Paga">Paga</option>
                         <option value="Pendente">Pendente</option>
                         <option value="Atrasado">Atrasada</option>
                         <option value="Pago Parcialmente">Pago Parcialmente</option>
                     </select>
-                    <input type="date" value={filters.startDate} onChange={e => setFilters(f => ({...f, startDate: e.target.value}))} className="form-input" />
-                    <input type="date" value={filters.endDate} onChange={e => setFilters(f => ({...f, endDate: e.target.value}))} className="form-input" />
+                    <input type="date" value={filters.startDate} onChange={handleStartDateChange} className="form-input" />
+                    <input type="date" value={filters.endDate} onChange={handleEndDateChange} className="form-input" />
                 </div>
             </section>
 
@@ -197,7 +238,7 @@ const ClientFinancialDashboardPage: React.FC<{
                         </tr>
                     </thead>
                     <tbody>
-                        {processedInvoices.map(inv => (
+                        {processedInvoices.map((inv: FormattedInvoice) => (
                             <tr key={inv.raw.id}>
                                 <td>{new Date(inv.date).toLocaleDateString()}</td>
                                 <td><button onClick={() => onViewInvoice(inv.raw.id, false)} className="text-primary hover:underline font-mono">{inv.docNumber}</button></td>

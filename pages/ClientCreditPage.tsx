@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import type { Client, Invoice } from '../types';
 import { formatCurrency, getInvoiceStatusAndBalance } from '../utils/helpers';
 
-interface ClientCreditPageProps {
+interface Props {
     clients: Client[];
     invoices: Invoice[];
     onPayInvoice: (id: string) => void;
@@ -14,8 +14,9 @@ type ClientWithDebt = Client & {
     pendingInvoices: Invoice[];
 };
 
-const ClientCreditPage: React.FC<ClientCreditPageProps> = ({ clients, invoices, onPayInvoice, onViewInvoice }) => {
-
+const ClientCreditPage: React.FC<Props> = (props: Props) => {
+    const { clients, invoices, onPayInvoice, onViewInvoice } = props;
+    
     const clientsWithDebt: ClientWithDebt[] = useMemo(() => {
         return clients.map((client: Client) => {
             const clientInvoices = invoices.filter((inv: Invoice) => inv.clientId === client.id);

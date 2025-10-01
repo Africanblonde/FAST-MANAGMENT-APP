@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, ChangeEvent } from 'react';
 import type { Asset, Permission, AssetCategory, AssetLocation, Supplier } from '../types';
 import { formatCurrency, exportToCsv } from '../utils/helpers';
 import { ICONS } from '../constants';
 
-const PatrimonioPage: React.FC<{
+interface PatrimonioPageProps {
     assets: Asset[];
     categories: AssetCategory[];
     locations: AssetLocation[];
@@ -13,7 +13,20 @@ const PatrimonioPage: React.FC<{
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
     setActivePage: (page: string) => void;
-}> = ({ assets, categories, locations, suppliers, onAdd, onEdit, onDelete, hasPermission, setActivePage }) => {
+}
+
+const PatrimonioPage: React.FC<PatrimonioPageProps> = (props: PatrimonioPageProps) => {
+    const { 
+        assets, 
+        categories, 
+        locations, 
+        suppliers, 
+        onAdd, 
+        onEdit, 
+        onDelete, 
+        hasPermission, 
+        setActivePage 
+    } = props;
 
     const [categoryFilter, setCategoryFilter] = useState('');
     const [locationFilter, setLocationFilter] = useState('');
@@ -22,15 +35,15 @@ const PatrimonioPage: React.FC<{
 
     const summaryStats = useMemo(() => {
         return {
-            totalItems: assets.reduce((sum, asset) => sum + asset.quantity, 0),
-            totalValue: assets.reduce((sum, asset) => sum + (asset.purchasePrice || 0) * asset.quantity, 0),
-            activeItems: assets.filter(a => a.status === 'Ativo').reduce((sum, asset) => sum + asset.quantity, 0),
-            inMaintenanceItems: assets.filter(a => a.status === 'Em Manutenção').reduce((sum, asset) => sum + asset.quantity, 0),
+            totalItems: assets.reduce((sum: number, asset: Asset) => sum + asset.quantity, 0),
+            totalValue: assets.reduce((sum: number, asset: Asset) => sum + (asset.purchasePrice || 0) * asset.quantity, 0),
+            activeItems: assets.filter((a: Asset) => a.status === 'Ativo').reduce((sum: number, asset: Asset) => sum + asset.quantity, 0),
+            inMaintenanceItems: assets.filter((a: Asset) => a.status === 'Em Manutenção').reduce((sum: number, asset: Asset) => sum + asset.quantity, 0),
         };
     }, [assets]);
     
     const filteredAssets = useMemo(() => {
-        return assets.filter(asset => {
+        return assets.filter((asset: Asset) => {
             const searchLower = searchQuery.toLowerCase();
             return (
                 (categoryFilter === '' || asset.categoryId === categoryFilter) &&
@@ -44,13 +57,13 @@ const PatrimonioPage: React.FC<{
     }, [assets, categoryFilter, locationFilter, statusFilter, searchQuery]);
 
     const handleExport = () => {
-        const dataToExport = filteredAssets.map(asset => ({
+        const dataToExport = filteredAssets.map((asset: Asset) => ({
             'Nome': asset.name,
             'Modelo': asset.model || '',
             'Nº Série': asset.serialNumber || '',
-            'Categoria': categories.find(c => c.id === asset.categoryId)?.name || 'N/A',
-            'Localização': locations.find(l => l.id === asset.locationId)?.name || 'N/A',
-            'Fornecedor': suppliers.find(s => s.id === asset.supplierId)?.name || 'N/A',
+            'Categoria': categories.find((c: AssetCategory) => c.id === asset.categoryId)?.name || 'N/A',
+            'Localização': locations.find((l: AssetLocation) => l.id === asset.locationId)?.name || 'N/A',
+            'Fornecedor': suppliers.find((s: Supplier) => s.id === asset.supplierId)?.name || 'N/A',
             'Data Aquisição': asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : '',
             'Valor Aquisição': asset.purchasePrice || 0,
             'Quantidade': asset.quantity,
@@ -61,8 +74,8 @@ const PatrimonioPage: React.FC<{
     };
 
     const renderAssetCard = (item: Asset) => {
-        const category = categories.find(c => c.id === item.categoryId)?.name || 'N/A';
-        const location = locations.find(l => l.id === item.locationId)?.name || 'N/A';
+        const category = categories.find((c: AssetCategory) => c.id === item.categoryId)?.name || 'N/A';
+        const location = locations.find((l: AssetLocation) => l.id === item.locationId)?.name || 'N/A';
         const statusStyles: Record<string, React.CSSProperties> = { 
             'Ativo': { backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)' },
             'Inativo': { backgroundColor: 'hsla(215, 16%, 55%, 0.1)', color: 'var(--color-text-tertiary)' },
@@ -92,6 +105,11 @@ const PatrimonioPage: React.FC<{
         )
     }
 
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value);
+    const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => setCategoryFilter(e.target.value);
+    const handleLocationChange = (e: ChangeEvent<HTMLSelectElement>) => setLocationFilter(e.target.value);
+    const handleStatusChange = (e: ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value);
+
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-center flex-wrap gap-4">
@@ -116,16 +134,16 @@ const PatrimonioPage: React.FC<{
             
             <div className="card p-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <input type="text" placeholder="Pesquisar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="lg:col-span-2 form-input" />
-                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="form-select">
+                    <input type="text" placeholder="Pesquisar..." value={searchQuery} onChange={handleSearchChange} className="lg:col-span-2 form-input" />
+                    <select value={categoryFilter} onChange={handleCategoryChange} className="form-select">
                         <option value="">Todas Categorias</option>
-                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        {categories.map((c: AssetCategory) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-                    <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} className="form-select">
+                    <select value={locationFilter} onChange={handleLocationChange} className="form-select">
                         <option value="">Todas Localizações</option>
-                        {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                        {locations.map((l: AssetLocation) => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
-                    <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="form-select">
+                    <select value={statusFilter} onChange={handleStatusChange} className="form-select">
                         <option value="">Todos Estados</option>
                         <option value="Ativo">Ativo</option>
                         <option value="Inativo">Inativo</option>

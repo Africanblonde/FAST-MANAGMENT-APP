@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import type { Supplier } from '../../types';
 
@@ -9,11 +7,18 @@ interface SupplierFormProps {
     onCancel: () => void;
 }
 
-const SupplierForm: React.FC<SupplierFormProps> = ({ item, onSave, onCancel }) => {
-    const [supplier, setSupplier] = useState(item);
+const SupplierForm: React.FC<SupplierFormProps> = ({ 
+    item, 
+    onSave, 
+    onCancel 
+}: SupplierFormProps) => {
+    const [supplier, setSupplier] = useState<Partial<Supplier>>(item);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSupplier(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setSupplier((prev: Partial<Supplier>) => ({ 
+            ...prev, 
+            [e.target.name]: e.target.value 
+        }));
     };
     
     const handleSubmit = (e: React.FormEvent) => {
@@ -23,8 +28,22 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ item, onSave, onCancel }) =
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <input name="name" value={supplier.name || ''} onChange={handleChange} placeholder="Nome do Fornecedor" required className="form-input"/>
-            <input name="contact" value={supplier.contact || ''} onChange={handleChange} placeholder="Contacto" required className="form-input"/>
+            <input 
+                name="name" 
+                value={supplier.name || ''} 
+                onChange={handleChange} 
+                placeholder="Nome do Fornecedor" 
+                required 
+                className="form-input"
+            />
+            <input 
+                name="contact" 
+                value={supplier.contact || ''} 
+                onChange={handleChange} 
+                placeholder="Contacto" 
+                required 
+                className="form-input"
+            />
             <div className="flex justify-end gap-4 pt-4" style={{borderTop: '1px solid var(--color-border)'}}>
                 <button type="button" onClick={onCancel} className="btn btn-ghost">Cancelar</button>
                 <button type="submit" className="btn btn-primary">Guardar</button>

@@ -81,20 +81,20 @@ export const useCurrency = () => {
 };
 
 interface CurrencyProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) => {
-  const [currency, setCurrencyState] = useState<Currency>(CURRENCIES[0]); // Default to MZN
+export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }: CurrencyProviderProps) => {
+  const [currency, setCurrencyState] = useState<Currency>(CURRENCIES[0]);
 
   useEffect(() => {
-    const savedCurrency = localStorage.getItem('currency') as CurrencyCode;
-    if (savedCurrency) {
-      const foundCurrency = CURRENCIES.find(c => c.code === savedCurrency);
-      if (foundCurrency) {
-        setCurrencyState(foundCurrency);
+      const savedCurrency = localStorage.getItem('currency') as CurrencyCode;
+      if (savedCurrency) {
+          const foundCurrency = CURRENCIES.find(c => c.code === savedCurrency);
+          if (foundCurrency) {
+              setCurrencyState(foundCurrency);
+          }
       }
-    }
   }, []);
 
   const setCurrency = (currencyCode: CurrencyCode) => {

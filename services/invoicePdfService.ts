@@ -5,6 +5,19 @@ import autoTable from 'jspdf-autotable';
 import type { Invoice, Client, Vehicle, LayoutSettings } from '../types';
 import { formatCurrency } from '../utils/helpers';
 
+interface CellHookData {
+    row: {
+        index: number;
+    };
+    cell: {
+        styles: {
+            fontStyle?: string;
+            fontSize?: number;
+            lineWidth?: number | { top: number };
+            lineColor?: [number, number, number];
+        };
+    };
+}
 const fetchAndEncodeImage = async (url: string): Promise<string | null> => {
     try {
         const response = await fetch(url);
@@ -57,7 +70,8 @@ export const generateInvoicePdf = async (
     if (logoUrl) {
       const encodedLogo = await fetchAndEncodeImage(logoUrl);
       if (encodedLogo) {
-        const imgProps = doc.getImageProperties(encodedLogo);
+        // getImageProperties may not be present in the typings; use any
+        const imgProps = (doc as any).getImageProperties(encodedLogo);
         const imgWidth = 40;
         const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
         doc.addImage(encodedLogo, 'PNG', margin, yPos, imgWidth, imgHeight);
@@ -198,34 +212,32 @@ export const generateInvoicePdf = async (
     totalsData.push(['TOTAL:', formatCurrency(invoice.total)]);
 
 // FIX: Added 'as const' to string literals for theme, tableWidth, halign, and fontStyle to satisfy the types expected by jspdf-autotable.
-    autoTable(doc as any, {
-        startY: yPos,
-        body: totalsData,
-        theme: 'grid' as const,
-        tableWidth: 'wrap' as const,
-        margin: { left: pageWidth - margin - 80 },
-        styles: {
-            fontSize: 10,
-            cellPadding: 2,
-            overflow: 'visible',
-            lineWidth: 0.1,
-            // FIX: Added 'as const' to `lineColor` to ensure it is treated as a tuple.
-            lineColor: [150, 150, 150] as const
-        },
-        columnStyles: {
-            0: { halign: 'right' as const, cellWidth: 40 },
-            1: { halign: 'right' as const, cellWidth: 40, fontStyle: 'bold' as const }
-        },
-        didParseCell: function (data) {
-            if (data.row.index === totalsData.length - 1) { // Target the TOTAL row (last row)
-                data.cell.styles.fontStyle = 'bold' as const;
-                data.cell.styles.fontSize = 12;
-                data.cell.styles.lineWidth = { top: 0.4 };
-                // FIX: Added 'as const' to `lineColor` to ensure it is treated as a tuple.
-                data.cell.styles.lineColor = [50, 50, 50] as const;
-            }
+autoTable(doc as any, {
+    startY: yPos,
+    body: totalsData,
+    theme: 'grid' as const,
+    tableWidth: 'wrap' as const,
+    margin: { left: pageWidth - margin - 80 },
+    styles: {
+        fontSize: 10,
+        cellPadding: 2,
+        overflow: 'visible',
+        lineWidth: 0.1,
+        lineColor: [150, 150, 150] as const
+    },
+    columnStyles: {
+        0: { halign: 'right' as const, cellWidth: 40 },
+        1: { halign: 'right' as const, cellWidth: 40, fontStyle: 'bold' as const }
+    },
+    didParseCell: function (data: CellHookData) {
+        if (data.row.index === totalsData.length - 1) { // Target the TOTAL row (last row)
+            data.cell.styles.fontStyle = 'bold' as const;
+            data.cell.styles.fontSize = 12;
+            data.cell.styles.lineWidth = { top: 0.4 };
+            data.cell.styles.lineColor = [50, 50, 50] as const;
         }
-    });
+    }
+});
 
     yPos = (doc as any).lastAutoTable.finalY + 10;
     

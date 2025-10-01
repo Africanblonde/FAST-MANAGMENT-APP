@@ -10,17 +10,17 @@ interface AssetFormProps {
     suppliers: Supplier[];
 }
 
-const AssetForm: React.FC<AssetFormProps> = ({ item, onSave, onCancel, categories, locations, suppliers }) => {
-    const [asset, setAsset] = useState(item);
+const AssetForm = ({ item, onSave, onCancel, categories, locations, suppliers }: AssetFormProps) => {
+    const [asset, setAsset] = useState<Partial<Asset>>(item);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const parsedValue = type === 'number' ? parseFloat(value) || 0 : value;
-        setAsset(prev => ({...prev, [name]: parsedValue }));
+        setAsset((prev: Partial<Asset>) => ({...prev, [name]: parsedValue }));
     };
 
     const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setAsset(prev => ({ ...prev, purchaseDate: new Date(e.target.value).toISOString() }));
+        setAsset((prev: Partial<Asset>) => ({ ...prev, purchaseDate: new Date(e.target.value).toISOString() }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -40,11 +40,11 @@ const AssetForm: React.FC<AssetFormProps> = ({ item, onSave, onCancel, categorie
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <select name="categoryId" value={asset.categoryId || ''} onChange={handleChange} required className="form-select">
                     <option value="">Selecione a Categoria</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {categories.map((c: AssetCategory) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
                 <select name="locationId" value={asset.locationId || ''} onChange={handleChange} required className="form-select">
                     <option value="">Selecione a Localização</option>
-                    {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                    {locations.map((l: AssetLocation) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </select>
             </div>
              <select name="status" value={asset.status || 'Ativo'} onChange={handleChange} required className="form-select">
@@ -61,7 +61,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ item, onSave, onCancel, categorie
                 </div>
                  <select name="supplierId" value={asset.supplierId || ''} onChange={handleChange} className="form-select">
                     <option value="">Selecione o Fornecedor (opcional)</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    {suppliers.map((s: Supplier) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
             </div>
             

@@ -15,7 +15,7 @@ const LanguageSelector: React.FC = () => {
     <div className="relative">
       <select 
         value={language} 
-        onChange={(e) => setLanguage(e.target.value as Language)}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setLanguage(e.target.value as Language)}
         className="form-select"
         style={{ 
           paddingRight: '2.5rem',

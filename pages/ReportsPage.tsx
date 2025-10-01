@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import type { Invoice, Expense, Client, Occurrence, Purchase, SalaryAdvance, ExtraReceipt, Employee, Supplier } from '../types';
+import React, { useMemo, useState, ChangeEvent } from 'react';
+import type { Invoice, Expense, Client, Occurrence, Purchase, SalaryAdvance, ExtraReceipt, Employee, Supplier, Payment } from '../types';
 import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, ComposedChart, Line } from 'recharts';
 import { formatCurrency } from '../utils/helpers';
 import { ICONS } from '../constants';
@@ -25,7 +25,18 @@ type ActivityReportItem = {
     icon: React.ReactNode;
 };
 
-const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, occurrences, purchases, salaryAdvances, extraReceipts, employees, suppliers }) => {
+const ReportsPage: React.FC<ReportsPageProps> = (props: ReportsPageProps) => {
+    const { 
+        invoices, 
+        expenses, 
+        clients, 
+        occurrences, 
+        purchases, 
+        salaryAdvances, 
+        extraReceipts, 
+        employees, 
+        suppliers 
+    } = props;
 
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -35,21 +46,21 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         const dataMap: { [key: string]: { name: string, receitas: number, despesas: number, lucro: number } } = {};
         const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString('pt-PT', { month: 'short', year: 'numeric' });
 
-        invoices.forEach(inv => {
-            (inv.payments || []).forEach(p => {
+        invoices.forEach((inv: Invoice) => {
+            (inv.payments || []).forEach((p: Payment) => {
                 const month = formatDate(p.date);
                 if (!dataMap[month]) dataMap[month] = { name: month, receitas: 0, despesas: 0, lucro: 0 };
                 dataMap[month].receitas += p.amount;
             });
         });
         
-        extraReceipts.forEach(r => {
+        extraReceipts.forEach((r: ExtraReceipt) => {
             const month = formatDate(r.date);
             if (!dataMap[month]) dataMap[month] = { name: month, receitas: 0, despesas: 0, lucro: 0 };
             dataMap[month].receitas += r.amount;
         });
 
-        expenses.forEach(exp => {
+        expenses.forEach((exp: Expense) => {
             const month = formatDate(exp.date);
             if (!dataMap[month]) dataMap[month] = { name: month, receitas: 0, despesas: 0, lucro: 0 };
             dataMap[month].despesas += exp.amount;
@@ -58,13 +69,13 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         return Object.values(dataMap).map(data => ({
             ...data,
             lucro: data.receitas - data.despesas
-        })).sort((a,b) => new Date(`01 ${a.name.replace(' de ',' ')}`).getTime() - new Date(`01 ${b.name.replace(' de ',' ')}`).getTime());
+        })).sort((a, b) => new Date(`01 ${a.name.replace(' de ',' ')}`).getTime() - new Date(`01 ${b.name.replace(' de ',' ')}`).getTime());
 
     }, [invoices, expenses, extraReceipts]);
     
     const summaryStats = useMemo(() => {
-        const totalReceitas = monthlyData.reduce((sum, d) => sum + d.receitas, 0);
-        const totalDespesas = monthlyData.reduce((sum, d) => sum + d.despesas, 0);
+        const totalReceitas = monthlyData.reduce((sum: number, d: any) => sum + d.receitas, 0);
+        const totalDespesas = monthlyData.reduce((sum: number, d: any) => sum + d.despesas, 0);
         const totalLucro = totalReceitas - totalDespesas;
         const averageMonthlyProfit = monthlyData.length > 0 ? totalLucro / monthlyData.length : 0;
         
@@ -92,8 +103,8 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         const allActivities: ActivityReportItem[] = [];
 
         // Credits: Invoice Payments
-        invoices.forEach(inv => {
-            (inv.payments || []).forEach(p => {
+        invoices.forEach((inv: Invoice) => {
+            (inv.payments || []).forEach((p: Payment) => {
                 const pDate = new Date(p.date).getTime();
                 if (pDate >= start && pDate <= endTime) {
                     allActivities.push({
@@ -109,7 +120,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         });
 
         // Credits: Extra Receipts
-        extraReceipts.forEach(r => {
+        extraReceipts.forEach((r: ExtraReceipt) => {
             const rDate = new Date(r.date).getTime();
              if (rDate >= start && rDate <= endTime) {
                 allActivities.push({
@@ -124,7 +135,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         });
 
         // Debits: Expenses
-        expenses.forEach(exp => {
+        expenses.forEach((exp: Expense) => {
             const expDate = new Date(exp.date).getTime();
             if (expDate >= start && expDate <= endTime) {
                 allActivities.push({
@@ -139,10 +150,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         });
 
         // Debits: Purchases
-        purchases.forEach(pur => {
+        purchases.forEach((pur: Purchase) => {
             const purDate = new Date(pur.date).getTime();
             if (purDate >= start && purDate <= endTime) {
-                const supplierName = suppliers.find(s => s.id === pur.supplierId)?.name || 'Fornecedor';
+                const supplierName = suppliers.find((s: Supplier) => s.id === pur.supplierId)?.name || 'Fornecedor';
                 allActivities.push({
                     date: pur.date,
                     type: 'Compra a Fornecedor',
@@ -155,10 +166,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         });
         
         // Debits: Salary Advances
-        salaryAdvances.forEach(adv => {
+        salaryAdvances.forEach((adv: SalaryAdvance) => {
             const advDate = new Date(adv.date).getTime();
              if (advDate >= start && advDate <= endTime) {
-                const employee = employees.find(e => e.id === adv.employeeId);
+                const employee = employees.find((e: Employee) => e.id === adv.employeeId);
                 allActivities.push({
                     date: adv.date,
                     type: 'Adiantamento Salarial',
@@ -171,7 +182,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
         });
         
         // Info: Occurrences
-        occurrences.forEach(occ => {
+        occurrences.forEach((occ: Occurrence) => {
             const occDate = new Date(occ.created_at).getTime();
             if (occDate >= start && occDate <= endTime) {
                 allActivities.push({
@@ -185,9 +196,12 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
             }
         });
 
-        const sortedActivities = allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const sortedActivities = allActivities.sort((a: ActivityReportItem, b: ActivityReportItem) => new Date(b.date).getTime() - new Date(a.date).getTime());
         setActivityReport(sortedActivities);
     };
+
+    const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value);
+    const handleEndDateChange = (e: ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value);
 
     return (
         <div className="space-y-8">
@@ -224,7 +238,10 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
                         <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
                         <XAxis dataKey="name" stroke="#94a3b8" />
                         <YAxis stroke="#94a3b8" width={100} tick={{ fontSize: '12px' }} tickFormatter={(value: number) => new Intl.NumberFormat('pt-PT', { notation: 'compact', compactDisplay: 'short' }).format(value)} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} formatter={(value: number) => formatCurrency(value)} />
+                        <Tooltip 
+                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} 
+                            formatter={(value: unknown) => formatCurrency(value as number)} 
+                        />
                         <Legend />
                         <Bar dataKey="receitas" fill="#22c55e" name="Receitas" />
                         <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />
@@ -240,9 +257,9 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
                 </div>
                 <div className="card-body">
                     <div className="flex flex-wrap items-center gap-4 mb-4">
-                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="form-input" />
+                        <input type="date" value={startDate} onChange={handleStartDateChange} className="form-input" />
                         <span style={{color: 'var(--color-text-secondary)'}}>até</span>
-                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="form-input" />
+                        <input type="date" value={endDate} onChange={handleEndDateChange} className="form-input" />
                         <button onClick={handleGenerateReport} className="btn btn-primary">Gerar Relatório</button>
                     </div>
 
@@ -252,7 +269,7 @@ const ReportsPage: React.FC<ReportsPageProps> = ({ invoices, expenses, clients, 
                             <p style={{color: 'var(--color-text-secondary)'}}>Nenhuma atividade encontrada no período selecionado.</p>
                         ) : (
                             <div className="space-y-3" style={{maxHeight: '500px', overflowY: 'auto'}}>
-                                {activityReport.map((item, index) => (
+                                {activityReport.map((item: ActivityReportItem, index: number) => (
                                     <div key={index} className="card" style={{padding: '1rem', backgroundColor: 'hsla(220, 26%, 12%, 0.3)', display: 'flex', alignItems: 'flex-start', gap: '1rem'}}>
                                         <div className={`p-2 rounded-full ${item.kind === 'credit' ? 'bg-green-900/50 text-green-400' : item.kind === 'debit' ? 'bg-red-900/50 text-red-400' : 'bg-blue-900/50 text-blue-400'}`}>
                                             {item.icon}

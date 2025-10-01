@@ -17,7 +17,8 @@ interface StatementItem {
     type: 'credit' | 'debit';
 }
 
-const StatementPage: React.FC<StatementPageProps> = ({ invoices, clients, suppliers, expenses }) => {
+// Removido React.FC e tipado diretamente
+const StatementPage = ({ invoices, clients, suppliers, expenses }: StatementPageProps) => {
 
     const [filterType, setFilterType] = useState('all');
     const [selectedId, setSelectedId] = useState('');

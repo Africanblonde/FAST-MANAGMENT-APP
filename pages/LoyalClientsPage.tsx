@@ -14,7 +14,8 @@ type ClientStats = Client & {
     lastVisitDate: Date | null;
 };
 
-const LoyalClientsPage: React.FC<LoyalClientsPageProps> = ({ clients, invoices }) => {
+// Removido React.FC e tipado diretamente
+const LoyalClientsPage = ({ clients, invoices }: LoyalClientsPageProps) => {
     
     const [sortBy, setSortBy] = useState<'totalSpent' | 'visitCount' | 'lastVisitDate'>('totalSpent');
     const [period, setPeriod] = useState<'all' | '6m' | '30d'>('all');
@@ -52,10 +53,10 @@ const LoyalClientsPage: React.FC<LoyalClientsPageProps> = ({ clients, invoices }
                 visitCount,
                 lastVisitDate,
             };
-        }).filter(c => c.visitCount > 0); // Only show clients with activity in the period
+        }).filter((c: ClientStats) => c.visitCount > 0); // Tipado como ClientStats
 
-        // Sort the array based on the selected criteria
-        return calculatedStats.sort((a, b) => {
+        // Sort com parâmetros tipados
+        return calculatedStats.sort((a: ClientStats, b: ClientStats) => {
             switch (sortBy) {
                 case 'visitCount':
                     return b.visitCount - a.visitCount || b.totalSpent - a.totalSpent;
@@ -76,9 +77,10 @@ const LoyalClientsPage: React.FC<LoyalClientsPageProps> = ({ clients, invoices }
         if (index === 1) return 'status-success';
         if (index === 2) return 'status-danger';
         return 'status';
-    }
+    };
 
-    const FilterButton: React.FC<{ value: typeof period, label: string }> = ({ value, label }) => (
+    // Componente interno com props tipadas
+    const FilterButton = ({ value, label }: { value: typeof period; label: string }) => (
         <button 
             onClick={() => setPeriod(value)}
             className={period === value ? 'btn btn-primary' : 'btn btn-ghost'}
@@ -100,9 +102,9 @@ const LoyalClientsPage: React.FC<LoyalClientsPageProps> = ({ clients, invoices }
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-slate-400">Ordenar por:</span>
-                     <select 
+                    <select 
                         value={sortBy} 
-                        onChange={(e) => setSortBy(e.target.value as any)}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as any)}
                         className="form-select"
                     >
                         <option value="totalSpent">Total Gasto</option>
@@ -120,7 +122,7 @@ const LoyalClientsPage: React.FC<LoyalClientsPageProps> = ({ clients, invoices }
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {clientStats.map((client, index) => (
+                    {clientStats.map((client: ClientStats, index: number) => (
                         <div key={client.id} className="card" style={{display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden'}}>
                             <div className="card-body">
                            <div className={`absolute top-0 right-0 w-12 h-12 flex items-center justify-center font-black text-2xl rounded-bl-full ${getRankClass(index)}`}>

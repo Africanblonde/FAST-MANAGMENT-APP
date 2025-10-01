@@ -1,16 +1,19 @@
-
 import React from 'react';
 import type { AssetLocation, Permission } from '../types';
 import GenericManagementPage from '../components/GenericManagementPage';
 
-const AssetLocationsPage: React.FC<{
+interface Props {
     locations: AssetLocation[];
     onAdd: () => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
     setActivePage: (page: string) => void;
-}> = ({ locations, onAdd, onEdit, onDelete, hasPermission, setActivePage }) => {
+}
+
+const AssetLocationsPage: React.FC<Props> = (props: Props) => {
+    const { locations, onAdd, onEdit, onDelete, hasPermission, setActivePage } = props;
+    
     return (
         <GenericManagementPage<AssetLocation>
             title="Localizações do Património"
@@ -20,12 +23,12 @@ const AssetLocationsPage: React.FC<{
             onDelete={onDelete}
             hasPermission={hasPermission}
             permissionPrefix="assets"
-             customHeaderButtons={
+            customHeaderButtons={
                 <button onClick={() => setActivePage('assets')} className="btn bg-slate-600 hover:bg-slate-500">
                     Voltar para Património
                 </button>
             }
-            renderItem={item => (
+            renderItem={(item: AssetLocation) => (
                 <>
                     <p className="font-bold text-lg text-white">{item.name}</p>
                     {item.responsible && <p className="text-slate-400">Responsável: {item.responsible}</p>}

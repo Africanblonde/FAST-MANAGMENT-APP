@@ -2,14 +2,31 @@ import React from 'react';
 import type { AssetCategory, Permission } from '../types';
 import GenericManagementPage from '../components/GenericManagementPage';
 
-const AssetCategoriesPage: React.FC<{
+interface Props {
     categories: AssetCategory[];
     onAdd: () => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
     setActivePage: (page: string) => void;
-}> = ({ categories, onAdd, onEdit, onDelete, hasPermission, setActivePage }) => {
+}
+
+const AssetCategoriesPage: React.FC = ({ 
+    categories, 
+    onAdd, 
+    onEdit, 
+    onDelete, 
+    hasPermission, 
+    setActivePage 
+}: {
+    categories: AssetCategory[];
+    onAdd: () => void;
+    onEdit: (id: string) => void;
+    onDelete: (id: string) => void;
+    hasPermission: (p: Permission) => boolean;
+    setActivePage: (page: string) => void;
+}) => {
+    
     return (
         <GenericManagementPage<AssetCategory>
             title="Categorias de Património"
@@ -24,7 +41,7 @@ const AssetCategoriesPage: React.FC<{
                     Voltar para Património
                 </button>
             }
-            renderItem={item => (
+            renderItem={(item: AssetCategory) => (
                 <p className="font-bold text-lg text-white">{item.name}</p>
             )}
         />

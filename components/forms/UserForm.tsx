@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { Role } from '../../types';
 
@@ -8,17 +7,28 @@ interface UserFormProps {
     roles: Role[];
 }
 
-const UserForm: React.FC<UserFormProps> = ({ onSave, onCancel, roles }) => {
-    const [formData, setFormData] = useState({ 
+interface UserFormState {
+    name: string;
+    email: string;
+    password: string;
+    roleId: string;
+}
+
+const UserForm: React.FC<UserFormProps> = ({ 
+    onSave, 
+    onCancel, 
+    roles 
+}: UserFormProps) => {
+    const [formData, setFormData] = useState<UserFormState>({ 
         name: '', 
         email: '', 
         password: '', 
-        roleId: roles.find(r => r.name === 'Gestão')?.id || '' 
+        roleId: roles.find((r: Role) => r.name === 'Gestão')?.id || '' 
     });
-    const [error, setError] = useState('');
+    const [error, setError] = useState<string>('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        setFormData((prev: UserFormState) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -38,12 +48,41 @@ const UserForm: React.FC<UserFormProps> = ({ onSave, onCancel, roles }) => {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="text-red-400 text-sm bg-red-900/30 p-2 rounded-md">{error}</p>}
-            <input name="name" value={formData.name} onChange={handleChange} placeholder="Nome Completo do Utilizador" required className="form-input" />
-            <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="Email" required className="form-input" />
-            <input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Password (mínimo 6 caracteres)" required className="form-input" />
-            <select name="roleId" value={formData.roleId} onChange={handleChange} required className="form-input">
+            <input 
+                name="name" 
+                value={formData.name} 
+                onChange={handleChange} 
+                placeholder="Nome Completo do Utilizador" 
+                required 
+                className="form-input" 
+            />
+            <input 
+                name="email" 
+                type="email" 
+                value={formData.email} 
+                onChange={handleChange} 
+                placeholder="Email" 
+                required 
+                className="form-input" 
+            />
+            <input 
+                name="password" 
+                type="password" 
+                value={formData.password} 
+                onChange={handleChange} 
+                placeholder="Password (mínimo 6 caracteres)" 
+                required 
+                className="form-input" 
+            />
+            <select 
+                name="roleId" 
+                value={formData.roleId} 
+                onChange={handleChange} 
+                required 
+                className="form-input"
+            >
                 <option value="">-- Selecione um Perfil --</option>
-                {roles.map(role => (
+                {roles.map((role: Role) => (
                     <option key={role.id} value={role.id}>{role.name}</option>
                 ))}
             </select>

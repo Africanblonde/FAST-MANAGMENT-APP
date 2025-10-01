@@ -4,19 +4,28 @@ import { formatCurrency } from '../utils/helpers';
 import Modal from '../components/Modal';
 import { ICONS } from '../constants';
 
-const SupplierDebtDetails: React.FC<{
-    supplier: Supplier,
-    purchases: Purchase[],
-    onPay: (purchase: Purchase) => void,
-    onAddNewDebt: () => void,
-    getPurchaseBalance: (purchaseId: string) => number,
-}> = ({ supplier, purchases, onPay, onAddNewDebt, getPurchaseBalance }) => {
+interface SupplierDebtDetailsProps {
+    supplier: Supplier;
+    purchases: Purchase[];
+    onPay: (purchase: Purchase) => void;
+    onAddNewDebt: () => void;
+    getPurchaseBalance: (purchaseId: string) => number;
+}
+
+// Removido React.FC e tipado diretamente
+const SupplierDebtDetails = ({ 
+    supplier, 
+    purchases, 
+    onPay, 
+    onAddNewDebt, 
+    getPurchaseBalance 
+}: SupplierDebtDetailsProps) => {
 
     const pendingPurchases = useMemo(() => {
         return purchases
-            .filter(p => p.supplierId === supplier.id)
-            .map(p => ({ ...p, balance: getPurchaseBalance(p.id) }))
-            .filter(p => p.balance > 0.01);
+            .filter((p: Purchase) => p.supplierId === supplier.id)
+            .map((p: Purchase) => ({ ...p, balance: getPurchaseBalance(p.id) }))
+            .filter((p: { balance: number }) => p.balance > 0.01);
     }, [purchases, supplier.id, getPurchaseBalance]);
     
     return (
@@ -30,7 +39,7 @@ const SupplierDebtDetails: React.FC<{
                 <p className="text-slate-400">Nenhuma dívida pendente para este fornecedor.</p>
             ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto p-1">
-                    {pendingPurchases.map(purchase => (
+                    {pendingPurchases.map((purchase: Purchase & { balance: number }) => (
                         <div key={purchase.id} className="bg-slate-700 p-3 rounded-md flex justify-between items-center">
                             <div>
                                 <p className="font-semibold">{purchase.description}</p>
@@ -46,7 +55,7 @@ const SupplierDebtDetails: React.FC<{
     );
 }
 
-const SuppliersPage: React.FC<{
+interface SuppliersPageProps {
     suppliers: Supplier[];
     purchases: Purchase[];
     expenses: Expense[];
@@ -56,33 +65,50 @@ const SuppliersPage: React.FC<{
     onAddPurchase: (supplierId: string | null) => void;
     onPayPurchase: (purchase: Purchase, balance: number) => void;
     hasPermission: (p: Permission) => boolean;
-}> = ({ suppliers, purchases, expenses, onAdd, onEdit, onDelete, onAddPurchase, onPayPurchase, hasPermission }) => {
+}
+
+interface SupplierWithDebt extends Supplier {
+    totalDebt: number;
+}
+
+// Removido React.FC e tipado diretamente
+const SuppliersPage = ({ 
+    suppliers, 
+    purchases, 
+    expenses, 
+    onAdd, 
+    onEdit, 
+    onDelete, 
+    onAddPurchase, 
+    onPayPurchase, 
+    hasPermission 
+}: SuppliersPageProps) => {
     
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
     const getPurchaseBalance = useCallback((purchaseId: string): number => {
-        const purchase = purchases.find(p => p.id === purchaseId);
+        const purchase = purchases.find((p: Purchase) => p.id === purchaseId);
         if (!purchase) return 0;
         const paymentsTotal = expenses
-            .filter(e => e.purchaseId === purchaseId)
-            .reduce((sum, e) => sum + e.amount, 0);
+            .filter((e: Expense) => e.purchaseId === purchaseId)
+            .reduce((sum: number, e: Expense) => sum + e.amount, 0);
         return purchase.amount - paymentsTotal;
     }, [purchases, expenses]);
     
-    const suppliersWithDebt = useMemo(() => {
-        return suppliers.map(supplier => {
+    const suppliersWithDebt = useMemo((): SupplierWithDebt[] => {
+        return suppliers.map((supplier: Supplier) => {
             const totalDebt = purchases
-                .filter(p => p.supplierId === supplier.id)
-                .reduce((sum, p) => sum + getPurchaseBalance(p.id), 0);
+                .filter((p: Purchase) => p.supplierId === supplier.id)
+                .reduce((sum: number, p: Purchase) => sum + getPurchaseBalance(p.id), 0);
             return { ...supplier, totalDebt };
-        }).sort((a,b) => b.totalDebt - a.totalDebt);
+        }).sort((a: SupplierWithDebt, b: SupplierWithDebt) => b.totalDebt - a.totalDebt);
     }, [suppliers, purchases, getPurchaseBalance]);
 
     const stats = useMemo(() => {
-        const totalDebt = suppliersWithDebt.reduce((sum, s) => sum + s.totalDebt, 0);
+        const totalDebt = suppliersWithDebt.reduce((sum: number, s: SupplierWithDebt) => sum + s.totalDebt, 0);
         const totalPaid = expenses
-            .filter(e => e.type === 'Compra Fornecedor')
-            .reduce((sum, e) => sum + e.amount, 0);
+            .filter((e: Expense) => e.type === 'Compra Fornecedor')
+            .reduce((sum: number, e: Expense) => sum + e.amount, 0);
         return {
             totalSuppliers: suppliers.length,
             totalDebt,
@@ -90,7 +116,7 @@ const SuppliersPage: React.FC<{
         };
     }, [suppliers.length, suppliersWithDebt, expenses]);
 
-    const renderSupplierCard = (supplier: Supplier & { totalDebt: number }) => (
+    const renderSupplierCard = (supplier: SupplierWithDebt) => (
         <div key={supplier.id} className="card flex flex-col justify-between">
             <div className="p-4">
                 <h3 className="text-lg font-bold text-white">{supplier.name}</h3>
@@ -161,7 +187,7 @@ const SuppliersPage: React.FC<{
                             setSelectedSupplier(null);
                             setTimeout(() => onAddPurchase(supplierId), 100);
                         }}
-                        onPay={(purchase) => {
+                        onPay={(purchase: Purchase) => {
                              setSelectedSupplier(null);
                              setTimeout(() => onPayPurchase(purchase, getPurchaseBalance(purchase.id)), 100);
                         }}

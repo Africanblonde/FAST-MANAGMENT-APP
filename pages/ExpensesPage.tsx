@@ -2,12 +2,17 @@ import React, { useMemo } from 'react';
 import type { Expense, Permission } from '../types';
 import { formatCurrency } from '../utils/helpers';
 
-const ExpensesPage: React.FC<{
+const ExpensesPage = ({
+    expenses,
+    onAdd,
+    onDelete,
+    hasPermission
+}: {
     expenses: Expense[];
     onAdd: () => void;
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
-}> = ({ expenses, onAdd, onDelete, hasPermission }) => {
+}) => {
     
     const sortedExpenses = useMemo(() => {
         return [...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -37,7 +42,7 @@ const ExpensesPage: React.FC<{
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedExpenses.map(expense => (
+                        {sortedExpenses.map((expense: Expense) => (
                             <tr key={expense.id}>
                                 <td>{new Date(expense.date).toLocaleDateString()}</td>
                                 <td>{expense.description}</td>

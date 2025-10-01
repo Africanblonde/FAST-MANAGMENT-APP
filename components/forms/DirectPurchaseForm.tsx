@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Supplier, PaymentMethod, Purchase } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
@@ -11,7 +10,7 @@ interface DirectPurchaseFormProps {
     purchases: Purchase[];
 }
 
-const DirectPurchaseForm: React.FC<DirectPurchaseFormProps> = ({ onSave, onCancel, suppliers, paymentMethods, purchases }) => {
+const DirectPurchaseForm = ({ onSave, onCancel, suppliers, paymentMethods, purchases }: DirectPurchaseFormProps) => {
     const [purchase, setPurchase] = useState({
         description: '',
         purchasePrice: '',
@@ -24,8 +23,8 @@ const DirectPurchaseForm: React.FC<DirectPurchaseFormProps> = ({ onSave, onCance
     
     const supplierPurchaseHistory = useMemo(() => {
         if (!purchase.supplierId) return [];
-        const supplierPurchases = purchases.filter(p => p.supplierId === purchase.supplierId).map(p => ({description: p.description, amount: p.amount }));
-        return Array.from(new Map(supplierPurchases.map(p => [p.description, p])).values()); // Unique descriptions
+        const supplierPurchases = purchases.filter((p: Purchase) => p.supplierId === purchase.supplierId).map((p: Purchase) => ({description: p.description, amount: p.amount }));
+        return Array.from(new Map(supplierPurchases.map((p: { description: string, amount: number }) => [p.description, p])).values()); // Unique descriptions
     }, [purchase.supplierId, purchases]);
 
     const unitPrice = useMemo(() => {
@@ -43,22 +42,22 @@ const DirectPurchaseForm: React.FC<DirectPurchaseFormProps> = ({ onSave, onCance
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setPurchase(prev => ({...prev, [name]: value }));
+        setPurchase((prev: typeof purchase) => ({...prev, [name]: value }));
         
         if (name === 'supplierId' && value === '') {
-            setPurchase(prev => ({ ...prev, description: '', purchasePrice: ''}));
+            setPurchase((prev: typeof purchase) => ({ ...prev, description: '', purchasePrice: ''}));
         }
     };
     
     const handleHistorySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const description = e.target.value;
         if (!description) {
-            setPurchase(prev => ({ ...prev, description: '', purchasePrice: ''}));
+            setPurchase((prev: typeof purchase) => ({ ...prev, description: '', purchasePrice: ''}));
             return;
         }
-        const historicPurchase = supplierPurchaseHistory.find(p => p.description === description);
+        const historicPurchase = supplierPurchaseHistory.find((p: { description: string, amount: number }) => p.description === description);
         if (historicPurchase) {
-            setPurchase(prev => ({ ...prev, description: historicPurchase.description, purchasePrice: String(historicPurchase.amount) }));
+            setPurchase((prev: typeof purchase) => ({ ...prev, description: historicPurchase.description, purchasePrice: String(historicPurchase.amount) }));
         }
     };
 
@@ -87,13 +86,13 @@ const DirectPurchaseForm: React.FC<DirectPurchaseFormProps> = ({ onSave, onCance
              <h3 className="text-lg font-semibold text-white">Registar Compra de Peça</h3>
              <select name="supplierId" value={purchase.supplierId} onChange={handleChange} required className="form-select">
                 <option value="">Selecione o Fornecedor</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {suppliers.map((s: Supplier) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             
             {purchase.supplierId && supplierPurchaseHistory.length > 0 && (
                 <select onChange={handleHistorySelect} className="form-select">
                     <option value="">-- Ou selecione um item do histórico --</option>
-                    {supplierPurchaseHistory.map(p => <option key={p.description} value={p.description}>{p.description}</option>)}
+                    {supplierPurchaseHistory.map((p: { description: string, amount: number }) => <option key={p.description} value={p.description}>{p.description}</option>)}
                 </select>
             )}
 
@@ -122,7 +121,7 @@ const DirectPurchaseForm: React.FC<DirectPurchaseFormProps> = ({ onSave, onCance
             {purchase.purchaseType === 'debit' && (
                 <select name="paymentMethod" value={purchase.paymentMethod} onChange={handleChange} required className="form-select">
                     <option value="">Forma de Pagamento</option>
-                    {paymentMethods.map(pm => <option key={pm.name} value={pm.name}>{pm.name}</option>)}
+                    {paymentMethods.map((pm: PaymentMethod) => <option key={pm.name} value={pm.name}>{pm.name}</option>)}
                 </select>
             )}
             <div className="flex justify-end gap-4 pt-4" style={{borderTop: '1px solid var(--color-border)'}}>

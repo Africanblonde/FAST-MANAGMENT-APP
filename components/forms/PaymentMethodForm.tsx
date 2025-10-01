@@ -1,48 +1,94 @@
 import React, { useState } from 'react';
-import type { PaymentMethod } from '../../types';
 
+// --- Tipos Locais (Substituindo '../../types') ---
+type PaymentMethod = {
+    name: string;
+    initialBalance: number;
+    // Adicionar outras propriedades de método de pagamento, se existirem
+};
+
+// Interface para as Props do Componente
 interface PaymentMethodFormProps {
-    item: { originalName: string | null } & Partial<PaymentMethod>;
-    onSave: (data: { originalName: string | null, newName: string, newBalance: number }) => void;
+    // Tipagem combinada: { originalName: string | null } AND Partial<PaymentMethod>
+    item: { originalName: string | null } & Partial<PaymentMethod>; 
+    onSave: (data: { originalName: string | null; newName: string; newBalance: number }) => void;
     onCancel: () => void;
 }
 
-const PaymentMethodForm: React.FC<PaymentMethodFormProps> = ({ item, onSave, onCancel }) => {
-    const [name, setName] = useState(item.name || '');
-    const [balance, setBalance] = useState(item.initialBalance ?? 0);
+// CORREÇÃO: Aplicar a tipagem diretamente à desestruturação das props.
+const PaymentMethodForm = ({ item, onSave, onCancel }: PaymentMethodFormProps) => {
+    // Usar 'string' e 'number' explicitamente para o estado
+    const [name, setName] = useState<string>(item.name || '');
+    const [balance, setBalance] = useState<number>(item.initialBalance ?? 0);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Tipagem explícita para o evento do formulário
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         onSave({ originalName: item.originalName, newName: name, newBalance: balance });
     };
+    
+    // Classes de estilo dark mode para o formulário
+    const inputClasses = "w-full p-3 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out shadow-sm";
+    const buttonClasses = "font-bold py-2 px-4 rounded transition duration-150 ease-in-out shadow-md";
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
-            <input 
-                name="name" 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome da Plataforma (Ex: M-Pesa)"
-                required
-                className="w-full p-2 bg-slate-700 rounded"
-            />
-             <div>
-                <label htmlFor="initialBalance" className="block text-sm font-medium text-slate-300 mb-1">Saldo Inicial</label>
-                <input 
-                    id="initialBalance"
-                    name="initialBalance" 
-                    type="number"
-                    step="0.01"
-                    value={balance ?? ''}
-                    onChange={(e) => setBalance(parseFloat(e.target.value) || 0)}
-                    placeholder="Valor inicial nesta conta"
+        <form onSubmit={handleSubmit} className="space-y-6 p-4 bg-slate-900 rounded-xl text-slate-100">
+            <h2 className="text-2xl font-bold text-blue-400 border-b border-slate-700 pb-2">Detalhes do Método de Pagamento</h2>
+            
+            <div>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-1">
+                    Nome da Plataforma
+                </label>
+                <input
+                    id="name"
+                    name="name"
+                    value={name}
+                    // Tipagem explícita para o evento de input
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                    placeholder="Ex: M-Pesa, Carteira, Conta Bancária"
                     required
-                    className="w-full p-2 bg-slate-700 rounded"
+                    className={inputClasses}
                 />
             </div>
-            <div className="flex justify-end gap-4 pt-4 border-t border-slate-700">
-                <button type="button" onClick={onCancel} className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded">Cancelar</button>
-                <button type="submit" className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Guardar</button>
+
+            <div>
+                <label htmlFor="initialBalance" className="block text-sm font-medium text-slate-300 mb-1">
+                    Saldo Inicial
+                </label>
+                <div className="relative">
+                    <input
+                        id="initialBalance"
+                        name="initialBalance"
+                        type="number"
+                        step="0.01"
+                        // Usar '' para permitir que o placeholder seja visível quando o valor é 0.
+                        value={balance === 0 ? '' : balance} 
+                        // Tipagem explícita para o evento de input
+                        // Garante que o estado é sempre um número (ou 0 se o input estiver vazio)
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBalance(parseFloat(e.target.value) || 0)}
+                        placeholder="0.00 MT"
+                        required
+                        className={`${inputClasses} pr-12`}
+                    />
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-sm font-medium">MT</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">Este é o saldo inicial para fins de reconciliação.</p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className={`${buttonClasses} bg-slate-600 hover:bg-slate-500 text-white`}
+                >
+                    Cancelar
+                </button>
+                <button
+                    type="submit"
+                    className={`${buttonClasses} bg-blue-600 hover:bg-blue-700 text-white`}
+                >
+                    Guardar
+                </button>
             </div>
         </form>
     );

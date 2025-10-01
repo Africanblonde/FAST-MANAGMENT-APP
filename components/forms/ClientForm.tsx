@@ -8,7 +8,7 @@ interface ClientFormProps {
     onCancel: () => void;
 }
 
-const ClientForm: React.FC<ClientFormProps> = ({ item, clients, onSave, onCancel }) => {
+const ClientForm = ({ item, clients, onSave, onCancel }: ClientFormProps) => {
     const isNew = !item.id;
     const [formData, setFormData] = useState({
         firstName: item.firstName || '',
@@ -33,7 +33,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ item, clients, onSave, onCancel
             newErrors.contact = "Contacto inválido. Deve ter 9 dígitos e começar com 82, 83, 84, 85, 86 ou 87.";
         } else {
             const isDuplicate = clients.some(
-                c => c.contact === formData.contact && c.id !== item.id
+                (c: Client) => c.contact === formData.contact && c.id !== item.id
             );
             if (isDuplicate) {
                 newErrors.contact = "Este contacto já está registado noutro cliente.";
@@ -47,16 +47,15 @@ const ClientForm: React.FC<ClientFormProps> = ({ item, clients, onSave, onCancel
             newErrors.licensePlate = "A matrícula é obrigatória se o modelo for preenchido.";
         }
 
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({...prev, [name]: value}));
+        setFormData((prev: typeof formData) => ({...prev, [name]: value})); // CORREÇÃO AQUI
         if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
+            setErrors((prev: Record<string, string>) => ({ ...prev, [name]: '' })); // CORREÇÃO AQUI
         }
     };
     
@@ -74,7 +73,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ item, clients, onSave, onCancel
         });
     };
 
-    const ErrorMessage: React.FC<{ name: string }> = ({ name }) => {
+    const ErrorMessage = ({ name }: { name: string }) => {
         return errors[name] ? <p className="text-sm text-red-400 mt-1">{errors[name]}</p> : null;
     };
 
@@ -99,7 +98,7 @@ const ClientForm: React.FC<ClientFormProps> = ({ item, clients, onSave, onCancel
                     <h3 className="text-lg font-semibold text-white mb-3">Adicionar Viatura (Opcional)</h3>
                     <div className="space-y-4">
                         <div>
-                            <input name="licensePlate" value={formData.licensePlate} onChange={handleChange} placeholder="Matrícula" className="form-input" onInput={e => e.currentTarget.value = e.currentTarget.value.toUpperCase()}/>
+                            <input name="licensePlate" value={formData.licensePlate} onChange={handleChange} placeholder="Matrícula" className="form-input" onInput={(e: React.FormEvent<HTMLInputElement>) => e.currentTarget.value = e.currentTarget.value.toUpperCase()}/>
                             <ErrorMessage name="licensePlate" />
                         </div>
                         <div>

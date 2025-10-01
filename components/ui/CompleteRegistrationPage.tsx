@@ -7,13 +7,15 @@ interface CompleteRegistrationPageProps {
     onSuccess: () => void;
 }
 
-const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ session, onSuccess }) => {
+const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ 
+    session, 
+    onSuccess 
+}: CompleteRegistrationPageProps) => {
     const [status, setStatus] = useState('A finalizar a configuração da sua conta...');
     const [error, setError] = useState<string | React.ReactNode>('');
     const setupStarted = useRef(false);
 
     useEffect(() => {
-        // This ref prevents the setup function from running twice in React's StrictMode.
         if (setupStarted.current) {
             return;
         }
@@ -30,7 +32,6 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ ses
             }
 
             try {
-                // 1. Call the RPC function to handle company, role, and profile creation in a single, secure transaction.
                 setStatus('A criar a sua empresa e perfil...');
                 const { data: newCompanyId, error: setupError } = await supabase.rpc(
                     'handle_new_user_setup',
@@ -43,8 +44,6 @@ const CompleteRegistrationPage: React.FC<CompleteRegistrationPageProps> = ({ ses
                 if (setupError) throw setupError;
                 if (!newCompanyId) throw new Error("A configuração da conta falhou: não foi possível obter o ID da empresa.");
 
-
-                // 2. Create default settings for the new company.
                 setStatus('A aplicar configurações iniciais...');
                 const { error: settingsError } = await supabase
                     .from('settings')

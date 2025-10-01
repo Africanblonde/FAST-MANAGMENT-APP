@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { AssetLocation } from '../../types';
 
@@ -8,11 +7,11 @@ interface AssetLocationFormProps {
     onCancel: () => void;
 }
 
-const AssetLocationForm: React.FC<AssetLocationFormProps> = ({ item, onSave, onCancel }) => {
-    const [location, setLocation] = useState(item);
+const AssetLocationForm = ({ item, onSave, onCancel }: AssetLocationFormProps) => {
+    const [location, setLocation] = useState<Partial<AssetLocation>>(item);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setLocation(prev => ({...prev, [e.target.name]: e.target.value}));
+        setLocation((prev: Partial<AssetLocation>) => ({...prev, [e.target.name]: e.target.value}));
     }
 
     const handleSubmit = (e: React.FormEvent) => {

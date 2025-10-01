@@ -5,7 +5,9 @@ interface PasswordResetRequestPageProps {
     onGoToLogin: () => void;
 }
 
-const PasswordResetRequestPage: React.FC<PasswordResetRequestPageProps> = ({ onGoToLogin }) => {
+const PasswordResetRequestPage: React.FC<PasswordResetRequestPageProps> = ({ 
+    onGoToLogin 
+}: PasswordResetRequestPageProps) => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -18,7 +20,7 @@ const PasswordResetRequestPage: React.FC<PasswordResetRequestPageProps> = ({ onG
         setLoading(true);
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin, // Redirect to the app's base URL
+            redirectTo: window.location.origin,
         });
 
         setLoading(false);
@@ -42,7 +44,7 @@ const PasswordResetRequestPage: React.FC<PasswordResetRequestPageProps> = ({ onG
                         type="email"
                         placeholder="Seu email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                         required
                         className="w-full p-3 bg-slate-700 rounded focus:ring-2 focus:ring-red-500 transition"
                     />

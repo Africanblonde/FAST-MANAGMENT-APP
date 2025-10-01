@@ -1,30 +1,54 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, ChangeEvent } from 'react';
 import type { Client, Invoice, InvoiceItem, Part, Permission, Service, User } from '../types';
 import { ICONS } from '../constants';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 
+// Interfaces para os componentes
+interface QuickSaleProps {
+    draft: Invoice;
+    onUpdate: (field: keyof Invoice, value: any) => void;
+    onRemoveItem: (id: string) => void;
+    onAddItem: (item: InvoiceItem) => void;
+    onClear: () => void;
+    onFinalize: () => void;
+    clients: Client[];
+    services: Service[];
+    parts: Part[];
+    onAddCustomItem: () => void;
+    onAddClient: () => void;
+    activeUser: User;
+}
+
+interface FollowUpProps {
+    warrantyItems: any[];
+    maintenanceItems: any[];
+    onMarkComplete: (invoiceId: string) => void;
+}
+
 // Sub-components specific to Dashboard
 
-const QuickSale: React.FC<{
-    draft: Invoice,
-    onUpdate: (field: keyof Invoice, value: any) => void,
-    onRemoveItem: (id: string) => void,
-    onAddItem: (item: InvoiceItem) => void,
-    onClear: () => void,
-    onFinalize: () => void,
-    clients: Client[],
-    services: Service[],
-    parts: Part[],
-    onAddCustomItem: () => void,
-    onAddClient: () => void,
-    activeUser: User,
-}> = ({ draft, onUpdate, onRemoveItem, onAddItem, onClear, onFinalize, clients, services, parts, onAddCustomItem, onAddClient, activeUser }) => {
+const QuickSale: React.FC<QuickSaleProps> = (props: QuickSaleProps) => {
+    const { 
+        draft, 
+        onUpdate, 
+        onRemoveItem, 
+        onAddItem, 
+        onClear, 
+        onFinalize, 
+        clients, 
+        services, 
+        parts, 
+        onAddCustomItem, 
+        onAddClient, 
+        activeUser 
+    } = props;
+    
     const { t } = useLanguage();
     const { formatCurrency: formatCurrencyWithCurrency } = useCurrency();
-    const total = useMemo(() => draft.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0), [draft.items]);
+    const total = useMemo(() => draft.items.reduce((sum: number, item: InvoiceItem) => sum + (item.quantity * item.unitPrice), 0), [draft.items]);
 
-    const handleSelectAndAddItem = (e: React.ChangeEvent<HTMLSelectElement>, type: 'service' | 'part') => {
+    const handleSelectAndAddItem = (e: ChangeEvent<HTMLSelectElement>, type: 'service' | 'part') => {
         const id = e.target.value;
         if (!id) return;
         
@@ -65,29 +89,29 @@ const QuickSale: React.FC<{
                 <h3 className="flex items-center gap-2">{ICONS.QUICK_SALE} {t('dashboard.quickSale')}</h3>
             </div>
             <div className="space-y-4" style={{ padding: '1rem', flexGrow: 1, overflowY: 'auto' }}>
-                <select value={draft.clientId} onChange={(e) => onUpdate('clientId', e.target.value)} className="form-select">
+                <select value={draft.clientId} onChange={(e: ChangeEvent<HTMLSelectElement>) => onUpdate('clientId', e.target.value)} className="form-select">
                     <option value="">-- {t('dashboard.selectClient')} --</option>
-                    {clients.map(c => <option key={c.id} value={c.id}>{`${c.firstName} ${c.lastName}`.trim()}</option>)}
+                    {clients.map((c: Client) => <option key={c.id} value={c.id}>{`${c.firstName} ${c.lastName}`.trim()}</option>)}
                 </select>
 
                 <div className="space-y-2">
                     <button onClick={onAddClient} className="btn btn-ghost" style={{width: '100%', backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)'}}>
                        <div className="w-4 h-4">{ICONS.USER_PLUS}</div> {t('dashboard.addClient')}
                     </button>
-                    <select onChange={(e) => handleSelectAndAddItem(e, 'service')} className="form-select">
+                    <select onChange={(e: ChangeEvent<HTMLSelectElement>) => handleSelectAndAddItem(e, 'service')} className="form-select">
                         <option value="">+ {t('dashboard.addService')}</option>
-                        {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        {services.map((s: Service) => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
-                     <select onChange={(e) => handleSelectAndAddItem(e, 'part')} className="form-select">
+                     <select onChange={(e: ChangeEvent<HTMLSelectElement>) => handleSelectAndAddItem(e, 'part')} className="form-select">
                         <option value="">+ {t('dashboard.addPart')}</option>
-                        {parts.map(p => <option key={p.id} value={p.id} disabled={p.quantity <= 0}>{`${p.name} (${p.quantity})`}</option>)}
+                        {parts.map((p: Part) => <option key={p.id} value={p.id} disabled={p.quantity <= 0}>{`${p.name} (${p.quantity})`}</option>)}
                     </select>
                     <button onClick={onAddCustomItem} className="btn btn-secondary" style={{width: '100%'}}>+ {t('dashboard.customItem')}</button>
                 </div>
 
                 <div className="space-y-2">
                     {draft.items.length === 0 && <p style={{ textAlign: 'center', color: 'var(--color-text-tertiary)', padding: '1rem 0' }}>{t('dashboard.noItemsAdded')}</p>}
-                    {draft.items.map(item => (
+                    {draft.items.map((item: InvoiceItem) => (
                         <div key={item.id} className="flex items-center" style={{ backgroundColor: 'var(--color-background)', padding: '0.5rem', borderRadius: 'var(--radius-md)'}}>
                             <div style={{ flexGrow: 1 }}>
                                 <p style={{ fontWeight: 600, fontSize: '0.875rem' }}>{item.description}</p>
@@ -115,11 +139,8 @@ const QuickSale: React.FC<{
     );
 };
 
-const FollowUp: React.FC<{
-    warrantyItems: any[],
-    maintenanceItems: any[],
-    onMarkComplete: (invoiceId: string) => void,
-}> = ({ warrantyItems, maintenanceItems, onMarkComplete }) => {
+const FollowUp: React.FC<FollowUpProps> = (props: FollowUpProps) => {
+    const { warrantyItems, maintenanceItems, onMarkComplete } = props;
     const [activeTab, setActiveTab] = useState('warranty');
     const { t } = useLanguage();
 
@@ -166,7 +187,7 @@ const FollowUp: React.FC<{
             </div>
             <div className="space-y-4" style={{ maxHeight: '24rem', overflowY: 'auto', paddingRight: '0.5rem' }}>
                 {itemsToDisplay.length > 0
-                    ? itemsToDisplay.map(item => renderItem(item, activeTab as any))
+                    ? itemsToDisplay.map((item: any) => renderItem(item, activeTab as any))
                     : <p style={{textAlign: 'center', color: 'var(--color-text-tertiary)', padding: '2rem 0'}}>{t('dashboard.noPendingActions')}</p>
                 }
             </div>
@@ -193,10 +214,25 @@ interface DashboardProps {
     onMarkFollowUpComplete: (invoiceId: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({
-    stats, quickSaleDraft, onQuickSaleUpdate, onQuickSaleAddItem, onQuickSaleRemoveItem, onClearQuickSale, onFinalizeQuickSale,
-    onAddCustomItem, onAddClient, clients, services, parts, followUpItems, onMarkFollowUpComplete, hasPermission, activeUser
-}) => {
+const Dashboard: React.FC<DashboardProps> = (props: DashboardProps) => {
+    const {
+        stats, 
+        quickSaleDraft, 
+        onQuickSaleUpdate, 
+        onQuickSaleAddItem, 
+        onQuickSaleRemoveItem, 
+        onClearQuickSale, 
+        onFinalizeQuickSale,
+        onAddCustomItem, 
+        onAddClient, 
+        clients, 
+        services, 
+        parts, 
+        followUpItems, 
+        onMarkFollowUpComplete, 
+        hasPermission, 
+        activeUser
+    } = props;
 
     const statIcons: Record<string, React.ReactNode> = {
         'Clientes Registados': ICONS.CLIENTS,

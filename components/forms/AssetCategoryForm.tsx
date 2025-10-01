@@ -1,19 +1,24 @@
-
 import React, { useState } from 'react';
 import type { AssetCategory } from '../../types';
 
+// Interface mais explícita
 interface AssetCategoryFormProps {
     item: Partial<AssetCategory>;
     onSave: (category: AssetCategory) => void;
     onCancel: () => void;
 }
 
-const AssetCategoryForm: React.FC<AssetCategoryFormProps> = ({ item, onSave, onCancel }) => {
-    const [category, setCategory] = useState(item);
+// Correção: Tipar explicitamente as props na função
+const AssetCategoryForm = ({ item, onSave, onCancel }: AssetCategoryFormProps) => {
+    const [category, setCategory] = useState<Partial<AssetCategory>>(item);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave(category as AssetCategory);
+    };
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCategory((prev: Partial<AssetCategory>) => ({...prev, name: e.target.value}));
     };
 
     return (
@@ -21,7 +26,7 @@ const AssetCategoryForm: React.FC<AssetCategoryFormProps> = ({ item, onSave, onC
             <input 
                 name="name" 
                 value={category.name || ''} 
-                onChange={(e) => setCategory(prev => ({...prev, name: e.target.value}))}
+                onChange={handleChange}
                 placeholder="Nome da Categoria" 
                 required 
                 className="form-input"

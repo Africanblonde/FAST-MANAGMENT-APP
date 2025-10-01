@@ -3,13 +3,16 @@ import type { Part, Permission } from '../types';
 import GenericManagementPage from '../components/GenericManagementPage';
 import { formatCurrency } from '../utils/helpers';
 
-const PartsPage: React.FC<{
+interface PartsPageProps {
     parts: Part[];
     onAdd: () => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
-}> = ({ parts, onAdd, onEdit, onDelete, hasPermission }) => {
+}
+
+// Removido React.FC
+const PartsPage = ({ parts, onAdd, onEdit, onDelete, hasPermission }: PartsPageProps) => {
     return (
         <GenericManagementPage<Part>
             title="Peças e Óleos"
@@ -19,7 +22,7 @@ const PartsPage: React.FC<{
             onDelete={onDelete}
             hasPermission={hasPermission}
             permissionPrefix="parts"
-            renderItem={item => {
+            renderItem={(item: Part) => {
                 const stockStyle: React.CSSProperties = item.quantity > 5 
                     ? { backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)' } 
                     : item.quantity > 0 

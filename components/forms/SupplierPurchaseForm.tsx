@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Supplier, PaymentMethod } from '../../types';
 
@@ -10,8 +9,23 @@ interface SupplierPurchaseFormProps {
     preselectedSupplierId: string | null;
 }
 
-const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({ onSave, onCancel, suppliers, paymentMethods, preselectedSupplierId }) => {
-    const [purchase, setPurchase] = useState({
+interface PurchaseState {
+    supplierId: string;
+    description: string;
+    amount: number;
+    date: string;
+    purchaseType: 'credit' | 'debit';
+    paymentMethod: string;
+}
+
+const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({ 
+    onSave, 
+    onCancel, 
+    suppliers, 
+    paymentMethods, 
+    preselectedSupplierId 
+}: SupplierPurchaseFormProps) => {
+    const [purchase, setPurchase] = useState<PurchaseState>({
         supplierId: preselectedSupplierId || '',
         description: '',
         amount: 0,
@@ -22,13 +36,16 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({ onSave, onC
 
     useEffect(() => {
         if(preselectedSupplierId) {
-            setPurchase(prev => ({...prev, supplierId: preselectedSupplierId}));
+            setPurchase((prev: PurchaseState) => ({...prev, supplierId: preselectedSupplierId}));
         }
     }, [preselectedSupplierId]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setPurchase(prev => ({...prev, [name]: name === 'amount' ? parseFloat(value) || 0 : value }));
+        setPurchase((prev: PurchaseState) => ({
+            ...prev, 
+            [name]: name === 'amount' ? parseFloat(value) || 0 : value 
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -42,20 +59,64 @@ const SupplierPurchaseForm: React.FC<SupplierPurchaseFormProps> = ({ onSave, onC
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-             <select name="supplierId" value={purchase.supplierId} onChange={handleChange} required className="form-select" disabled={!!preselectedSupplierId}>
+             <select 
+                 name="supplierId" 
+                 value={purchase.supplierId} 
+                 onChange={handleChange} 
+                 required 
+                 className="form-select" 
+                 disabled={!!preselectedSupplierId}
+             >
                 <option value="">Selecione o Fornecedor</option>
-                {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                {suppliers.map((s: Supplier) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
-            <input name="description" value={purchase.description} onChange={handleChange} placeholder="Descrição da Compra/Dívida" required className="form-input"/>
-            <input name="amount" type="number" step="0.01" value={purchase.amount ?? ''} onChange={handleChange} placeholder="Valor Total" required className="form-input"/>
-            <input name="date" type="date" value={purchase.date} onChange={handleChange} required className="form-input"/>
-            <select name="purchaseType" value={purchase.purchaseType} onChange={handleChange} required className="form-select">
+            <input 
+                name="description" 
+                value={purchase.description} 
+                onChange={handleChange} 
+                placeholder="Descrição da Compra/Dívida" 
+                required 
+                className="form-input"
+            />
+            <input 
+                name="amount" 
+                type="number" 
+                step="0.01" 
+                value={purchase.amount ?? ''} 
+                onChange={handleChange} 
+                placeholder="Valor Total" 
+                required 
+                className="form-input"
+            />
+            <input 
+                name="date" 
+                type="date" 
+                value={purchase.date} 
+                onChange={handleChange} 
+                required 
+                className="form-input"
+            />
+            <select 
+                name="purchaseType" 
+                value={purchase.purchaseType} 
+                onChange={handleChange} 
+                required 
+                className="form-select"
+            >
                 <option value="credit">A Crédito (dívida pendente)</option>
                 <option value="debit">Paga na Hora</option>
             </select>
             {purchase.purchaseType === 'debit' && (
-                <select name="paymentMethod" value={purchase.paymentMethod} onChange={handleChange} required className="form-select">
-                    {paymentMethods.map(pm => <option key={pm.name} value={pm.name}>{pm.name}</option>)}
+                <select 
+                    name="paymentMethod" 
+                    value={purchase.paymentMethod} 
+                    onChange={handleChange} 
+                    required 
+                    className="form-select"
+                >
+                    {paymentMethods.map((pm: PaymentMethod) => (
+                        <option key={pm.name} value={pm.name}>{pm.name}</option>
+                    ))}
                 </select>
             )}
             <div className="flex justify-end gap-4 pt-4" style={{borderTop: '1px solid var(--color-border)'}}>

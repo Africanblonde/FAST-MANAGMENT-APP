@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import type { Role, Permission } from '../../types';
 import { PERMISSION_GROUPS } from '../../constants';
@@ -15,7 +14,7 @@ const AccordionIcon = ({ isOpen }: { isOpen: boolean }) => (
     </svg>
 );
 
-const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
+const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }: RoleFormProps) => {
     const [role, setRole] = useState({
         name: item.name || '',
         permissions: (item.permissions as Permission[]) || []
@@ -23,7 +22,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
     const [openGroup, setOpenGroup] = useState<string | null>(Object.keys(PERMISSION_GROUPS)[0]);
 
     const handlePermissionChange = (permission: Permission, checked: boolean) => {
-        setRole(prev => {
+        setRole((prev: typeof role) => {
             const permissions = new Set(prev.permissions);
             if(checked) {
                 permissions.add(permission);
@@ -44,14 +43,14 @@ const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
     };
     
     const handleToggleGroup = (groupKey: string) => {
-        setOpenGroup(prev => (prev === groupKey ? null : groupKey));
+        setOpenGroup((prev: string | null) => (prev === groupKey ? null : groupKey));
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div>
                 <label htmlFor="roleName" className="form-label">Nome do Perfil</label>
-                <input id="roleName" name="name" value={role.name} onChange={(e) => setRole(prev => ({...prev, name: e.target.value}))} placeholder="Ex: Gerente de Vendas" required className="form-input"/>
+                <input id="roleName" name="name" value={role.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRole((prev: typeof role) => ({...prev, name: e.target.value}))} placeholder="Ex: Gerente de Vendas" required className="form-input"/>
             </div>
             
             <div className="space-y-2">
@@ -62,7 +61,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
                     const someSelected = selectedInGroup.length > 0 && !allSelected;
 
                     const handleSelectAll = (checked: boolean) => {
-                        setRole(prev => {
+                        setRole((prev: typeof role) => {
                             const currentPermissions = new Set(prev.permissions);
                             if (checked) {
                                 groupPermissions.forEach(p => currentPermissions.add(p));
@@ -91,8 +90,10 @@ const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
                                             <input
                                                 type="checkbox"
                                                 checked={allSelected}
-                                                ref={el => { if (el) el.indeterminate = someSelected; }}
-                                                onChange={e => handleSelectAll(e.target.checked)}
+                                                ref={(el: HTMLInputElement | null) => { 
+                                                    if (el) el.indeterminate = someSelected; 
+                                                }}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSelectAll(e.target.checked)}
                                                 className="form-checkbox"
                                             />
                                             <span className="font-semibold text-slate-300">Marcar todos</span>
@@ -104,7 +105,7 @@ const RoleForm: React.FC<RoleFormProps> = ({ item, onSave, onCancel }) => {
                                                 <input 
                                                     type="checkbox"
                                                     checked={role.permissions.includes(perm as Permission)}
-                                                    onChange={(e) => handlePermissionChange(perm as Permission, e.target.checked)}
+                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handlePermissionChange(perm as Permission, e.target.checked)}
                                                     className="form-checkbox"
                                                 />
                                                 <span className="text-slate-300">{desc}</span>

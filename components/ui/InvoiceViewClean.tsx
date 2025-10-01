@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import type { Invoice, Client, Vehicle, LayoutSettings } from '../../types';
+import type { Invoice, Client, Vehicle, LayoutSettings, InvoiceItem } from '../../types';
 import { formatCurrency, getInvoiceStatusAndBalance } from '../../utils/helpers';
 import ActionButton from './ActionButton';
 import { IconPrint, IconInvoice } from '../icons';
@@ -26,7 +25,7 @@ const InvoiceViewClean: React.FC<InvoiceViewCleanProps> = ({
     logoUrl, 
     isCollectionInvoice, 
     onClose 
-}) => {
+}: InvoiceViewCleanProps) => {
     
     const getDocumentType = (): DocumentType => {
         if (isCollectionInvoice) return 'Factura Recibo';
@@ -39,11 +38,11 @@ const InvoiceViewClean: React.FC<InvoiceViewCleanProps> = ({
     
     const { balance, totalPaid } = getInvoiceStatusAndBalance(invoice);
     
-    const servicosItems = invoice.items.filter(item => item.type === 'service');
-    const pecasItems = invoice.items.filter(item => item.type === 'part' || item.type === 'custom');
+    const servicosItems = invoice.items.filter((item: InvoiceItem) => item.type === 'service');
+    const pecasItems = invoice.items.filter((item: InvoiceItem) => item.type === 'part' || item.type === 'custom');
     
-    const subtotalServicos = servicosItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const subtotalPecas = pecasItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotalServicos = servicosItems.reduce((sum: number, item: InvoiceItem) => sum + (item.quantity * item.unitPrice), 0);
+    const subtotalPecas = pecasItems.reduce((sum: number, item: InvoiceItem) => sum + (item.quantity * item.unitPrice), 0);
     
     const getDocumentTitle = () => {
         switch (documentType) {
@@ -101,7 +100,12 @@ const InvoiceViewClean: React.FC<InvoiceViewCleanProps> = ({
             <div className="flex justify-between items-center mb-4 no-print">
                 <div className="flex items-center gap-4">
                     <label htmlFor="docType" className="font-semibold text-text-primary">Tipo:</label>
-                    <select id="docType" value={documentType} onChange={(e) => setDocumentType(e.target.value as DocumentType)} className="form-select">
+                    <select 
+                        id="docType" 
+                        value={documentType} 
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDocumentType(e.target.value as DocumentType)} 
+                        className="form-select"
+                    >
                         <option value="Cotação">Cotação</option>
                         <option value="Factura Pró-forma">Factura Pró-forma</option>
                         <option value="Factura">Factura</option>
@@ -155,7 +159,7 @@ const InvoiceViewClean: React.FC<InvoiceViewCleanProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {pecasItems.map(item => (
+                                {pecasItems.map((item: InvoiceItem) => (
                                     <tr key={item.id}>
                                         <td>{item.description}</td>
                                         <td className="text-center">{item.quantity}</td>
@@ -185,7 +189,7 @@ const InvoiceViewClean: React.FC<InvoiceViewCleanProps> = ({
                                 </tr>
                             </thead>
                             <tbody>
-                                {servicosItems.map(item => (
+                                {servicosItems.map((item: InvoiceItem) => (
                                     <tr key={item.id}>
                                         <td>{item.description}</td>
                                         <td className="text-center">{item.quantity}</td>

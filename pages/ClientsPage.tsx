@@ -3,7 +3,15 @@ import type { Client, Permission, Vehicle } from '../types';
 import GenericManagementPage from '../components/GenericManagementPage';
 import { ICONS } from '../constants';
 
-const ClientsPage: React.FC<{
+const ClientsPage = ({
+    clients,
+    vehicles,
+    onAdd,
+    onEdit,
+    onDelete,
+    hasPermission,
+    onViewFinancials
+}: {
     clients: Client[];
     vehicles: Vehicle[];
     onAdd: () => void;
@@ -11,7 +19,7 @@ const ClientsPage: React.FC<{
     onDelete: (id: string) => void;
     hasPermission: (p: Permission) => boolean;
     onViewFinancials: (client: Client) => void;
-}> = ({ clients, vehicles, onAdd, onEdit, onDelete, hasPermission, onViewFinancials }) => {
+}) => {
     return (
         <GenericManagementPage<Client>
             title="Clientes"
@@ -21,8 +29,8 @@ const ClientsPage: React.FC<{
             onDelete={onDelete}
             hasPermission={hasPermission}
             permissionPrefix="clients"
-            renderItem={item => {
-                const clientVehicles = vehicles.filter(v => v.clientId === item.id);
+            renderItem={(item) => {
+                const clientVehicles = vehicles.filter((v: Vehicle) => v.clientId === item.id);
                 return (
                     <>
                         <h3 style={{ fontSize: '1.125rem' }}>{`${item.firstName} ${item.lastName}`.trim()}</h3>
@@ -31,7 +39,7 @@ const ClientsPage: React.FC<{
                             <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid var(--color-border-subtle)' }}>
                                 <h4 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-tertiary)', marginBottom: '0.25rem' }}>Viaturas:</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {clientVehicles.map(v => (
+                                    {clientVehicles.map((v: Vehicle) => (
                                         <span key={v.id} style={{ 
                                             backgroundColor: 'var(--color-background)',
                                             color: 'var(--color-text-secondary)',
@@ -46,11 +54,11 @@ const ClientsPage: React.FC<{
                             </div>
                         )}
                     </>
-                )
+                );
             }}
             renderExtraActions={(item) => (
                 <button
-                    onClick={() => onViewFinancials(item as Client)}
+                    onClick={() => onViewFinancials(item)}
                     className="btn-icon"
                     title="Ver Histórico Financeiro"
                 >

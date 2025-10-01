@@ -2,12 +2,13 @@ import React from 'react';
 import type { AdminDashboardData, LicenseStatus } from '../types';
 import { ICONS } from '../constants';
 
-interface SuperAdminPageProps {
-    data: AdminDashboardData;
-    onLogout: () => void;
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    icon: React.ReactNode;
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode }> = ({ title, value, icon }) => (
+const StatCard = ({ title, value, icon }: StatCardProps) => (
     <div className="card" style={{ padding: '1.5rem' }}>
         <div className="flex items-center gap-4">
             <div style={{ color: 'var(--color-secondary)', backgroundColor: 'hsla(var(--color-secondary-hsl), 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)'}}>
@@ -21,7 +22,11 @@ const StatCard: React.FC<{ title: string; value: string | number; icon: React.Re
     </div>
 );
 
-const StatusBadge: React.FC<{ status: LicenseStatus }> = ({ status }) => {
+interface StatusBadgeProps {
+    status: LicenseStatus;
+}
+
+const StatusBadge = ({ status }: StatusBadgeProps) => {
     const styles: Record<LicenseStatus, React.CSSProperties> = {
         'Active': { backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)' },
         'Trial': { backgroundColor: 'hsla(45, 93%, 58%, 0.1)', color: 'var(--color-warning)' },
@@ -34,7 +39,12 @@ const StatusBadge: React.FC<{ status: LicenseStatus }> = ({ status }) => {
     );
 };
 
-const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ data, onLogout }) => {
+interface SuperAdminPageProps {
+    data: AdminDashboardData;
+    onLogout: () => void;
+}
+
+const SuperAdminPage = ({ data, onLogout }: SuperAdminPageProps) => {
     return (
         <div className="min-h-screen bg-slate-900 text-white p-8 space-y-8">
             <header className="flex justify-between items-center">
@@ -63,7 +73,7 @@ const SuperAdminPage: React.FC<SuperAdminPageProps> = ({ data, onLogout }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {data.companies.map(company => (
+                        {data.companies.map((company) => (
                             <tr key={company.id}>
                                 <td className="font-semibold">{company.name}</td>
                                 <td>{company.adminEmail}</td>

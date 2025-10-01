@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import type { LayoutSettings, PaymentMethod, Permission, Company, CompanyLicense, Role, ProfileRow } from '../types';
 import { ICONS } from '../constants';
 import Modal from '../components/Modal';
@@ -7,7 +7,6 @@ import UserForm from '../components/forms/UserForm';
 import { triggerImport, initialLayoutSettings } from '../utils/helpers';
 import { formatCurrency } from '../utils/helpers';
 import { supabase } from '../services/supabaseClient';
-
 
 interface SettingsPageProps {
     layoutSettings: LayoutSettings;
@@ -30,26 +29,28 @@ interface SettingsPageProps {
     onAddUser: (data: { name: string, email: string, password: string, roleId: string }) => Promise<{ success: boolean, message: string }>;
 }
 
-const SettingsPage: React.FC<SettingsPageProps> = ({
-    layoutSettings,
-    onSaveLayoutSettings,
-    paymentMethods,
-    onSavePaymentMethod,
-    onDeletePaymentMethod,
-    logoUrl,
-    onLogoUpload,
-    onLogoRemove,
-    hasPermission,
-    onExport,
-    onImport,
-    onReset,
-    company,
-    license,
-    onActivationSuccess,
-    users,
-    roles,
-    onAddUser,
-}) => {
+const SettingsPage: React.FC<SettingsPageProps> = (props: SettingsPageProps) => {
+    const { 
+        layoutSettings,
+        onSaveLayoutSettings,
+        paymentMethods,
+        onSavePaymentMethod,
+        onDeletePaymentMethod,
+        logoUrl,
+        onLogoUpload,
+        onLogoRemove,
+        hasPermission,
+        onExport,
+        onImport,
+        onReset,
+        company,
+        license,
+        onActivationSuccess,
+        users,
+        roles,
+        onAddUser
+    } = props;
+
     const [settings, setSettings] = useState<LayoutSettings>(initialLayoutSettings);
     const [editingMethod, setEditingMethod] = useState<({ originalName: string | null } & Partial<PaymentMethod>) | null>(null);
     const [saveStatus, setSaveStatus] = useState('');
@@ -121,7 +122,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         setTimeout(onActivationSuccess, 3000);
     };
 
-    const handleLayoutChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleLayoutChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
         const target = e.target as HTMLInputElement; // Cast to access 'checked'
         
@@ -133,7 +134,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         }
     };
     
-    const handleLayoutSave = (e: React.FormEvent) => {
+    const handleLayoutSave = (e: FormEvent) => {
         e.preventDefault();
         onSaveLayoutSettings(settings);
         setSaveStatus('Definições guardadas com sucesso!');
@@ -210,6 +211,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             alert(result.message);
         }
     };
+
+    const handleLicenseKeyChange = (e: ChangeEvent<HTMLInputElement>) => setLicenseKey(e.target.value);
 
     const trialEndsAt = company ? new Date(company.trial_ends_at) : null;
     const licenseExpiresAt = license ? new Date(license.expires_at) : null;
@@ -379,7 +382,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                         <input 
                             type="text" 
                             value={licenseKey} 
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLicenseKey(e.target.value)} 
+                            onChange={handleLicenseKeyChange}
                             placeholder="Insira a sua chave de licença"
                             className="form-input"
                         />

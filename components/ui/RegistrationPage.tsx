@@ -7,22 +7,35 @@ interface RegistrationPageProps {
     onGoToLanding: () => void;
 }
 
-const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) => {
-    const [formData, setFormData] = useState({
+interface RegistrationFormData {
+    companyName: string;
+    userName: string;
+    userLastName: string;
+    email: string;
+    password: string;
+    currency: CurrencyCode;
+    language: Language;
+}
+
+const RegistrationPage: React.FC<RegistrationPageProps> = ({ 
+    onGoToLanding 
+}: RegistrationPageProps) => {
+    const [formData, setFormData] = useState<RegistrationFormData>({
         companyName: '',
         userName: '',
         userLastName: '',
         email: '',
         password: '',
-        currency: 'MZN' as CurrencyCode,
-        language: 'pt' as Language
+        currency: 'MZN',
+        language: 'pt'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setFormData((prev: RegistrationFormData) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -32,7 +45,6 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
         setLoading(true);
 
         try {
-            // Sign up the user with Supabase Auth, storing company and user names in metadata
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
@@ -43,7 +55,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
                         currency: formData.currency,
                         language: formData.language
                     },
-                     emailRedirectTo: window.location.origin // Important for confirmation link
+                    emailRedirectTo: window.location.origin
                 }
             });
 
@@ -53,7 +65,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
             setMessage("Registo quase concluído! Enviámos um email de confirmação para a sua caixa de entrada. Por favor, clique no link para ativar a sua conta.");
         
         } catch (err: any) {
-             if (err.message.includes("User already registered")) {
+            if (err.message.includes("User already registered")) {
                 setError("Este email já está registado. Tente iniciar sessão ou redefinir a sua password.");
             } else {
                 setError(err.message || "Ocorreu um erro ao registar.");
@@ -67,8 +79,8 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
         <div style={{minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'}}>
             <div className="card" style={{padding: '2rem', width: '100%', maxWidth: '42rem'}}>
                 <h2 style={{textAlign: 'center', marginBottom: '1.5rem'}}>Registar Nova Oficina</h2>
-                 {error && <p style={{backgroundColor: 'hsla(0, 84%, 60%, 0.1)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', textAlign: 'center'}}>{error}</p>}
-                 {message && <p style={{backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', textAlign: 'center'}}>{message}</p>}
+                {error && <p style={{backgroundColor: 'hsla(0, 84%, 60%, 0.1)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', textAlign: 'center'}}>{error}</p>}
+                {message && <p style={{backgroundColor: 'hsla(139, 60%, 55%, 0.1)', color: 'var(--color-success)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', textAlign: 'center'}}>{message}</p>}
                 
                 {!message && (
                     <form onSubmit={handleSubmit} className="space-y-8">
@@ -108,7 +120,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
                                 <div>
                                     <label htmlFor="currency" style={{display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: '0.25rem'}}>Moeda Principal</label>
                                     <select id="currency" name="currency" value={formData.currency} onChange={handleChange} required className="form-select">
-                                        {CURRENCIES.map(curr => (
+                                        {CURRENCIES.map((curr: any) => (
                                             <option key={curr.code} value={curr.code}>
                                                 {curr.symbol} {curr.namePortuguese} ({curr.code})
                                             </option>
@@ -132,7 +144,7 @@ const RegistrationPage: React.FC<RegistrationPageProps> = ({ onGoToLanding }) =>
                         </button>
                     </form>
                 )}
-                 <div style={{marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem'}}>
+                <div style={{marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem'}}>
                     <button onClick={onGoToLanding} style={{color: 'var(--color-text-secondary)'}}>Voltar à Página Inicial</button>
                 </div>
             </div>

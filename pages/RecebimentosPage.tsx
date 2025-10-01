@@ -6,13 +6,22 @@ import Modal from '../components/Modal';
 import { ICONS } from '../constants';
 
 // Formulário para Receitas Extras
-export const ExtraReceiptForm: React.FC<{ 
-    item: Partial<ExtraReceipt>, 
-    onSave: (receipt: Partial<ExtraReceipt>) => void, 
-    onCancel: () => void, 
-    paymentMethods: string[] 
-}> = ({ item, onSave, onCancel, paymentMethods }) => {
-    const [receipt, setReceipt] = useState({
+interface ExtraReceiptFormProps {
+    item: Partial<ExtraReceipt>;
+    onSave: (receipt: Partial<ExtraReceipt>) => void;
+    onCancel: () => void;
+    paymentMethods: string[];
+}
+
+interface ReceiptState {
+    description: string;
+    amount: number;
+    date: string;
+    paymentMethod: string;
+}
+
+const ExtraReceiptForm = ({ item, onSave, onCancel, paymentMethods }: ExtraReceiptFormProps) => {
+    const [receipt, setReceipt] = useState<ReceiptState>({
         description: item.description || '',
         amount: item.amount || 0,
         date: (item.date || new Date().toISOString()).split('T')[0],
@@ -26,12 +35,43 @@ export const ExtraReceiptForm: React.FC<{
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <input name="description" value={receipt.description} onChange={(e) => setReceipt(r => ({ ...r, description: e.target.value }))} placeholder="Descrição da Receita" required className="form-input" />
-            <input name="amount" type="number" step="0.01" value={receipt.amount || ''} onChange={(e) => setReceipt(r => ({ ...r, amount: parseFloat(e.target.value) || 0 }))} placeholder="Valor (MT)" required className="form-input" />
-            <select name="paymentMethod" value={receipt.paymentMethod} onChange={(e) => setReceipt(r => ({ ...r, paymentMethod: e.target.value }))} required className="form-select">
-                {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+            <input 
+                name="description" 
+                value={receipt.description} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceipt((r: ReceiptState) => ({ ...r, description: e.target.value }))} 
+                placeholder="Descrição da Receita" 
+                required 
+                className="form-input" 
+            />
+            <input 
+                name="amount" 
+                type="number" 
+                step="0.01" 
+                value={receipt.amount || ''} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceipt((r: ReceiptState) => ({ ...r, amount: parseFloat(e.target.value) || 0 }))} 
+                placeholder="Valor (MT)" 
+                required 
+                className="form-input" 
+            />
+            <select 
+                name="paymentMethod" 
+                value={receipt.paymentMethod} 
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setReceipt((r: ReceiptState) => ({ ...r, paymentMethod: e.target.value }))} 
+                required 
+                className="form-select"
+            >
+                {paymentMethods.map((m: string) => (
+                    <option key={m} value={m}>{m}</option>
+                ))}
             </select>
-            <input type="date" name="date" value={receipt.date} onChange={(e) => setReceipt(r => ({ ...r, date: e.target.value }))} required className="form-input" />
+            <input 
+                type="date" 
+                name="date" 
+                value={receipt.date} 
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReceipt((r: ReceiptState) => ({ ...r, date: e.target.value }))} 
+                required 
+                className="form-input" 
+            />
             <div className="flex justify-end gap-4 pt-4 border-t border-slate-700">
                 <button type="button" onClick={onCancel} className="btn btn-ghost">Cancelar</button>
                 <button type="submit" className="btn btn-primary">Guardar</button>
@@ -40,19 +80,48 @@ export const ExtraReceiptForm: React.FC<{
     );
 };
 
-
-const RecebimentosPage: React.FC<{
-    invoices: Invoice[],
-    extraReceipts: ExtraReceipt[],
-    expenses: Expense[],
-    paymentMethods: PaymentMethod[],
-    onAddExtraReceipt: (receipt: Partial<ExtraReceipt>) => void,
-    onEditExtraReceipt: (receipt: Partial<ExtraReceipt>) => void,
-    onDeleteExtraReceipt: (id: string) => void,
+interface RecebimentosPageProps {
+    invoices: Invoice[];
+    extraReceipts: ExtraReceipt[];
+    expenses: Expense[];
+    paymentMethods: PaymentMethod[];
+    onAddExtraReceipt: (receipt: Partial<ExtraReceipt>) => void;
+    onEditExtraReceipt: (receipt: Partial<ExtraReceipt>) => void;
+    onDeleteExtraReceipt: (id: string) => void;
     onViewInvoice: (id: string, isCollection: boolean) => void;
     onDeleteInvoicePayment: (paymentId: string, invoiceId: string) => void;
     onOpenEditPaymentModal: (payment: InvoicePayment) => void;
-}> = ({ invoices, extraReceipts, expenses, paymentMethods, onAddExtraReceipt, onEditExtraReceipt, onDeleteExtraReceipt, onViewInvoice, onDeleteInvoicePayment, onOpenEditPaymentModal }) => {
+}
+
+interface DashboardBalance {
+    name: string;
+    balance: number;
+}
+
+interface PaymentItem {
+    id: string;
+    type: 'Fatura' | 'Extra';
+    date: string;
+    description: string;
+    subDescription: string;
+    amount: number;
+    method: string;
+    raw: InvoicePayment | ExtraReceipt;
+    invoiceId: string | null;
+}
+
+const RecebimentosPage = ({
+    invoices,
+    extraReceipts,
+    expenses,
+    paymentMethods,
+    onAddExtraReceipt,
+    onEditExtraReceipt,
+    onDeleteExtraReceipt,
+    onViewInvoice,
+    onDeleteInvoicePayment,
+    onOpenEditPaymentModal
+}: RecebimentosPageProps) => {
 
     const { currency } = useCurrency();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,12 +146,11 @@ const RecebimentosPage: React.FC<{
         handleCloseModal();
     };
 
-
-    const allPayments = useMemo(() => {
-        const invoicePayments = invoices.flatMap(inv => 
-            (inv.payments || []).map(p => ({
+    const allPayments = useMemo((): PaymentItem[] => {
+        const invoicePayments = invoices.flatMap((inv: Invoice) =>
+            (inv.payments || []).map((p: InvoicePayment) => ({
                 id: `${inv.id}-${p.id}`,
-                type: 'Fatura',
+                type: 'Fatura' as const,
                 date: p.date,
                 description: `Pagamento Fatura #${inv.display_id || inv.id}`,
                 subDescription: inv.clientName,
@@ -92,27 +160,26 @@ const RecebimentosPage: React.FC<{
                 invoiceId: inv.id
             }))
         );
-        const otherReceipts = extraReceipts.map(r => ({
+        const otherReceipts = extraReceipts.map((r: ExtraReceipt) => ({
             id: r.id,
-            type: 'Extra',
+            type: 'Extra' as const,
             date: r.date,
             description: r.description,
             subDescription: `Receita Diversa`,
             amount: r.amount,
             method: r.paymentMethod,
             raw: r,
-            invoiceId: null
+            invoiceId: null as string | null
         }));
 
         return [...invoicePayments, ...otherReceipts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [invoices, extraReceipts]);
 
-
-    const dashboardBalances = useMemo(() => {
+    const dashboardBalances = useMemo((): DashboardBalance[] => {
         const balanceMap = new Map<string, number>();
-        paymentMethods.forEach(pm => balanceMap.set(pm.name, pm.initialBalance));
+        paymentMethods.forEach((pm: PaymentMethod) => balanceMap.set(pm.name, pm.initialBalance));
 
-        allPayments.forEach(p => {
+        allPayments.forEach((p: PaymentItem) => {
             if (balanceMap.has(p.method)) {
                 balanceMap.set(p.method, balanceMap.get(p.method)! + p.amount);
             } else if (p.method) {
@@ -120,8 +187,8 @@ const RecebimentosPage: React.FC<{
             }
         });
 
-        expenses.forEach(e => {
-            if(balanceMap.has(e.paymentMethod)) {
+        expenses.forEach((e: Expense) => {
+            if (balanceMap.has(e.paymentMethod)) {
                 balanceMap.set(e.paymentMethod, balanceMap.get(e.paymentMethod)! - e.amount);
             } else if (e.paymentMethod) {
                 balanceMap.set(e.paymentMethod, -e.amount);
@@ -150,9 +217,8 @@ const RecebimentosPage: React.FC<{
         text: 'var(--color-text-primary)'
     };
 
-
     return (
-         <div className="space-y-8">
+        <div className="space-y-8">
             <div className="flex flex-wrap justify-between items-center gap-4">
                 <h1>Recebimentos & Saldos</h1>
                 <button onClick={() => handleOpenModal()} className="btn btn-primary">Adicionar Receita Extra</button>
@@ -161,7 +227,7 @@ const RecebimentosPage: React.FC<{
             <div>
                 <h2 className="text-xl font-bold text-white mb-6">Saldos Atuais</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {dashboardBalances.map(({name, balance}) => {
+                    {dashboardBalances.map(({ name, balance }: DashboardBalance) => {
                         let colors;
                         if (balance > 0.01) {
                             colors = positiveColors;
@@ -171,7 +237,7 @@ const RecebimentosPage: React.FC<{
                             colors = neutralColors;
                         }
                         
-                        const maxAbsBalance = Math.max(1, ...dashboardBalances.map(b => Math.abs(b.balance)));
+                        const maxAbsBalance = Math.max(1, ...dashboardBalances.map((b: DashboardBalance) => Math.abs(b.balance)));
                         const widthPercentage = (Math.abs(balance) / maxAbsBalance) * 100;
                         
                         return (
@@ -248,7 +314,7 @@ const RecebimentosPage: React.FC<{
                             </tr>
                         </thead>
                         <tbody>
-                            {allPayments.map(p => (
+                            {allPayments.map((p: PaymentItem) => (
                                 <tr key={p.id}>
                                     <td>
                                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${p.type === 'Fatura' ? 'bg-[hsla(180,100%,40%,0.1)] text-[var(--color-secondary)]' : 'bg-[hsla(139,60%,55%,0.1)] text-[var(--color-success)]'}`}>
@@ -291,7 +357,7 @@ const RecebimentosPage: React.FC<{
             </div>
             
             <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingReceipt?.id ? 'Editar Receita' : 'Adicionar Receita'}>
-                {editingReceipt && <ExtraReceiptForm item={editingReceipt} onSave={handleSaveReceipt} onCancel={handleCloseModal} paymentMethods={paymentMethods.map(pm => pm.name)} />}
+                {editingReceipt && <ExtraReceiptForm item={editingReceipt} onSave={handleSaveReceipt} onCancel={handleCloseModal} paymentMethods={paymentMethods.map((pm: PaymentMethod) => pm.name)} />}
             </Modal>
         </div>
     );

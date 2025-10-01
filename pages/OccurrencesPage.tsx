@@ -2,10 +2,11 @@ import React, { useState, useMemo } from 'react';
 import type { Occurrence } from '../types';
 
 interface OccurrenceFormProps {
-    onSave: (data: { person: string, description: string }) => void;
+    onSave: (data: { person: string; description: string }) => void;
 }
 
-const OccurrenceForm: React.FC<OccurrenceFormProps> = ({ onSave }) => {
+// Removido React.FC
+const OccurrenceForm = ({ onSave }: OccurrenceFormProps) => {
     const [person, setPerson] = useState('');
     const [description, setDescription] = useState('');
 
@@ -55,12 +56,13 @@ const OccurrenceForm: React.FC<OccurrenceFormProps> = ({ onSave }) => {
 
 interface OccurrencesPageProps {
     occurrences: Occurrence[];
-    onSave: (occurrence: { person: string, description: string }) => void;
+    onSave: (occurrence: { person: string; description: string }) => void;
 }
 
-const OccurrencesPage: React.FC<OccurrencesPageProps> = ({ occurrences, onSave }) => {
+// Removido React.FC
+const OccurrencesPage = ({ occurrences, onSave }: OccurrencesPageProps) => {
     
-     const sortedOccurrences = useMemo(() => {
+    const sortedOccurrences = useMemo(() => {
         return [...occurrences].sort((a: Occurrence, b: Occurrence) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }, [occurrences]);
     

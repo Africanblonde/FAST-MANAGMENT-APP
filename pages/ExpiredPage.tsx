@@ -7,7 +7,7 @@ interface ExpiredPageProps {
     onActivationSuccess: () => void;
 }
 
-const ExpiredPage: React.FC<ExpiredPageProps> = ({ company, onActivationSuccess }) => {
+const ExpiredPage: React.FC<ExpiredPageProps> = ({ company, onActivationSuccess }: ExpiredPageProps) => {
     const [licenseKey, setLicenseKey] = useState('');
     const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -81,7 +81,7 @@ const ExpiredPage: React.FC<ExpiredPageProps> = ({ company, onActivationSuccess 
                         <input 
                             type="text" 
                             value={licenseKey} 
-                            onChange={(e) => setLicenseKey(e.target.value)} 
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLicenseKey(e.target.value)} 
                             placeholder="Insira a sua nova chave de licença"
                             className="w-full p-3 bg-slate-700 rounded border border-slate-600 focus:ring-2 focus:ring-red-500 transition"
                         />

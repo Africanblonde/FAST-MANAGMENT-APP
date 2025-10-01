@@ -12,10 +12,11 @@ interface EmployeesPageProps {
     hasPermission: (p: Permission) => boolean;
 }
 
-const EmployeesPage: React.FC<EmployeesPageProps> = ({ employees, salaryAdvances, onAdd, onEdit, onDelete, onNewAdvance, hasPermission }) => {
+const EmployeesPage: React.FC<EmployeesPageProps> = (props: EmployeesPageProps) => {
+    const { employees, salaryAdvances, onAdd, onEdit, onDelete, onNewAdvance, hasPermission } = props;
     
-    const adminStaff = employees.filter(e => e.role === 'Administração');
-    const mechanics = employees.filter(e => e.role === 'Mecânico');
+    const adminStaff = employees.filter((e: Employee) => e.role === 'Administração');
+    const mechanics = employees.filter((e: Employee) => e.role === 'Mecânico');
 
     const renderEmployeeCard = (employee: Employee) => (
         <div key={employee.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -72,8 +73,8 @@ const EmployeesPage: React.FC<EmployeesPageProps> = ({ employees, salaryAdvances
                         </thead>
                         <tbody>
                             {salaryAdvances.length > 0 ? (
-                                [...salaryAdvances].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(advance => {
-                                    const employee = employees.find(e => e.id === advance.employeeId);
+                                [...salaryAdvances].sort((a: SalaryAdvance, b: SalaryAdvance) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((advance: SalaryAdvance) => {
+                                    const employee = employees.find((e: Employee) => e.id === advance.employeeId);
                                     return (
                                         <tr key={advance.id}>
                                             <td>{new Date(advance.date).toLocaleDateString()}</td>

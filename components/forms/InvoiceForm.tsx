@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import type { Client, Vehicle, Service, Part, Invoice, InvoiceItem, User, LayoutSettings, Supplier, PaymentMethod, Purchase } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
 import Modal from '../Modal';
@@ -22,26 +22,37 @@ interface InvoiceFormProps {
     onSavePurchase: (purchaseData: any) => Promise<{ success: boolean; error?: string }>;
 }
 
-const InvoiceForm: React.FC<InvoiceFormProps> = ({ 
-    initialInvoice, onSave, onCancel, clients, vehicles, services, parts, activeUser, layoutSettings,
-    suppliers, paymentMethods, purchases, onSavePurchase
-}) => {
-    
-    type InvoiceState = Omit<Invoice, 'discount' | 'items'> & {
-        discount: string | number;
-        items: (Omit<InvoiceItem, 'quantity' | 'unitPrice'> & { quantity: string | number, unitPrice: string | number })[];
-    };
+type InvoiceState = Omit<Invoice, 'discount' | 'items' | 'discountType'> & {
+    discount: string | number;
+    discountType: 'fixed' | 'percentage';
+    items: (Omit<InvoiceItem, 'quantity' | 'unitPrice'> & { quantity: string | number, unitPrice: string | number })[];
+};
 
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ 
+    initialInvoice, 
+    onSave, 
+    onCancel, 
+    clients, 
+    vehicles, 
+    services, 
+    parts, 
+    activeUser, 
+    layoutSettings,
+    suppliers, 
+    paymentMethods, 
+    purchases, 
+    onSavePurchase 
+}: InvoiceFormProps) => {
+    
     const [invoice, setInvoice] = useState<InvoiceState>({
         id: initialInvoice.id || '',
-        // FIX: Added missing properties to the initial state to match the InvoiceState type.
         display_id: initialInvoice.display_id || null,
         company_id: initialInvoice.company_id || activeUser?.company_id || '',
         clientId: initialInvoice.clientId || '',
         vehicleId: initialInvoice.vehicleId || '',
         clientName: initialInvoice.clientName || '',
         vehicleLicensePlate: initialInvoice.vehicleLicensePlate || '',
-        items: (initialInvoice.items || []).map(i => ({...i, quantity: i.quantity ?? '', unitPrice: i.unitPrice ?? ''})),
+        items: (initialInvoice.items || []).map((i: InvoiceItem) => ({...i, quantity: i.quantity ?? '', unitPrice: i.unitPrice ?? ''})),
         payments: initialInvoice.payments || [],
         subtotal: initialInvoice.subtotal || 0,
         total: initialInvoice.total || 0,
@@ -51,7 +62,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         status: initialInvoice.status || 'Pendente',
         description: initialInvoice.description || '',
         discount: initialInvoice.discount ?? '',
-        discountType: initialInvoice.discountType || 'fixed',
+        discountType: (initialInvoice.discountType === 'percentage' || initialInvoice.discountType === 'fixed') ? initialInvoice.discountType : 'fixed',
         created_at: initialInvoice.created_at || new Date().toISOString(),
         follow_up_completed_at: initialInvoice.follow_up_completed_at || null,
     });
@@ -59,20 +70,24 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     const [customItemModalOpen, setCustomItemModalOpen] = useState(false);
     const [directPurchaseModalOpen, setDirectPurchaseModalOpen] = useState(false);
 
-    const clientVehicles = useMemo(() => vehicles.filter(v => v.clientId === invoice.clientId), [invoice.clientId, vehicles]);
+    const clientVehicles = useMemo(() => 
+        vehicles.filter((v: Vehicle) => v.clientId === invoice.clientId), 
+        [invoice.clientId, vehicles]
+    );
 
     useEffect(() => {
-        setInvoice(prev => ({...prev, items: (initialInvoice.items || []).map(i => ({...i, quantity: i.quantity ?? '', unitPrice: i.unitPrice ?? ''}))}));
+        setInvoice((prev: InvoiceState) => ({...prev, items: (initialInvoice.items || []).map((i: InvoiceItem) => ({...i, quantity: i.quantity ?? '', unitPrice: i.unitPrice ?? ''}))}));
     }, [initialInvoice.items]);
 
     useEffect(() => {
         if(invoice.clientId && clientVehicles.length === 1 && !invoice.vehicleId) {
-            setInvoice(prev => ({...prev, vehicleId: clientVehicles[0].id}));
+            setInvoice((prev: InvoiceState) => ({...prev, vehicleId: clientVehicles[0].id}));
         }
     }, [invoice.clientId, clientVehicles, invoice.vehicleId]);
 
     useEffect(() => {
-        const subtotal = invoice.items.reduce((sum, item) => sum + ((parseFloat(item.unitPrice as string) || 0) * (parseInt(item.quantity as string) || 0)), 0);
+        const subtotal = invoice.items.reduce((sum: number, item: any) => 
+            sum + ((parseFloat(item.unitPrice as string) || 0) * (parseInt(item.quantity as string) || 0)), 0);
         const discountValue = parseFloat(invoice.discount as string) || 0;
         
         const discountAmount = invoice.discountType === 'fixed' 
@@ -83,7 +98,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         const taxAmount = invoice.taxApplied ? (subtotalAfterDiscount * layoutSettings.taxRate) / 100 : 0;
         const total = subtotalAfterDiscount + taxAmount;
 
-        setInvoice(prev => ({
+        setInvoice((prev: InvoiceState) => ({
             ...prev,
             subtotal: subtotal,
             taxAmount: taxAmount,
@@ -94,7 +109,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     const handleAddItem = (type: 'service' | 'part', itemId: string) => {
         if (!itemId) return;
         const sourceItems = type === 'service' ? services : parts;
-        const sourceItem = sourceItems.find(item => item.id === itemId);
+        const sourceItem = sourceItems.find((item: Service | Part) => item.id === itemId);
         if (!sourceItem) return;
 
         const newItem: Omit<InvoiceItem, "quantity" | "unitPrice"> & { quantity: string | number; unitPrice: string | number; } = {
@@ -111,13 +126,13 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             isCustom: false,
             created_at: new Date().toISOString(),
         };
-        setInvoice(prev => ({...prev, items: [...prev.items, newItem]}));
+        setInvoice((prev: InvoiceState) => ({...prev, items: [...prev.items, newItem]}));
     };
 
     const handleItemChange = (itemId: string, field: 'quantity' | 'unitPrice', value: string) => {
-        setInvoice(prev => ({
+        setInvoice((prev: InvoiceState) => ({
             ...prev,
-            items: prev.items.map(item => 
+            items: prev.items.map((item: any) => 
                 item.id === itemId 
                     ? {...item, [field]: value}
                     : item
@@ -126,7 +141,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
     };
 
     const handleRemoveItem = (itemId: string) => {
-        setInvoice(prev => ({...prev, items: prev.items.filter(item => item.id !== itemId)}));
+        setInvoice((prev: InvoiceState) => ({...prev, items: prev.items.filter((item: any) => item.id !== itemId)}));
     };
 
     const handleSaveCustomItem = (data: { type: 'service' | 'part', description: string, unitPrice: number }) => {
@@ -139,13 +154,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
             description: data.description,
             quantity: 1,
             unitPrice: data.unitPrice,
-            // FIX: Added missing properties to match the InvoiceItem type.
             purchasePrice: null,
             supplierId: null,
             isCustom: true,
             created_at: new Date().toISOString(),
         };
-        setInvoice(prev => ({...prev, items: [...prev.items, newItem]}));
+        setInvoice((prev: InvoiceState) => ({...prev, items: [...prev.items, newItem]}));
         setCustomItemModalOpen(false);
     };
 
@@ -175,7 +189,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     isCustom: true,
                     created_at: new Date().toISOString(),
                 };
-                setInvoice(prev => ({ ...prev, items: [...prev.items, newItem] }));
+                setInvoice((prev: InvoiceState) => ({ ...prev, items: [...prev.items, newItem] }));
                 setDirectPurchaseModalOpen(false);
             } else {
                 console.error('Erro ao guardar compra:', result?.error);
@@ -202,7 +216,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         const finalInvoice: Invoice = {
             ...(invoice as Omit<Invoice, 'items' | 'discount'>),
             discount: parseFloat(String(invoice.discount)) || 0,
-            items: invoice.items.map(item => ({
+            items: invoice.items.map((item: any) => ({
                 ...item,
                 quantity: parseInt(String(item.quantity), 10) || 1,
                 unitPrice: parseFloat(String(item.unitPrice)) || 0,
@@ -210,6 +224,34 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
         };
 
         onSave(finalInvoice);
+    };
+
+    const handleClientChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, clientId: e.target.value, vehicleId: ''}));
+    };
+
+    const handleVehicleChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, vehicleId: e.target.value}));
+    };
+
+    const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, issueDate: new Date(e.target.value).toISOString()}));
+    };
+
+    const handleDescriptionChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, description: e.target.value}));
+    };
+
+    const handleDiscountChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, discount: e.target.value}));
+    };
+
+    const handleDiscountTypeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, discountType: e.target.value as 'fixed' | 'percentage'}));
+    };
+
+    const handleTaxAppliedChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setInvoice((prev: InvoiceState) => ({...prev, taxApplied: e.target.checked}));
     };
 
     return (
@@ -222,16 +264,36 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     {/* Card: Dados Principais */}
                     <div className="card">
                         <div className="card-body grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <select name="clientId" value={invoice.clientId} onChange={e => setInvoice(prev => ({...prev, clientId: e.target.value, vehicleId: ''}))} required className="md:col-span-1 form-select">
+                            <select 
+                                name="clientId" 
+                                value={invoice.clientId} 
+                                onChange={handleClientChange}
+                                required 
+                                className="md:col-span-1 form-select"
+                            >
                                 <option value="">-- Selecione um Cliente --</option>
-                                {clients.map(c => <option key={c.id} value={c.id}>{`${c.firstName} ${c.lastName}`.trim()}</option>)}
+                                {clients.map((c: Client) => <option key={c.id} value={c.id}>{`${c.firstName} ${c.lastName}`.trim()}</option>)}
                             </select>
-                            <select name="vehicleId" value={invoice.vehicleId} onChange={e => setInvoice(prev => ({...prev, vehicleId: e.target.value}))} required className="md:col-span-1 form-select" disabled={!invoice.clientId}>
+                            <select 
+                                name="vehicleId" 
+                                value={invoice.vehicleId} 
+                                onChange={handleVehicleChange}
+                                required 
+                                className="md:col-span-1 form-select" 
+                                disabled={!invoice.clientId}
+                            >
                                 <option value="">-- Selecione uma Viatura --</option>
-                                {clientVehicles.map(v => <option key={v.id} value={v.id}>{`${v.licensePlate} (${v.model})`}</option>)}
+                                {clientVehicles.map((v: Vehicle) => <option key={v.id} value={v.id}>{`${v.licensePlate} (${v.model})`}</option>)}
                             </select>
                             <div className="md:col-span-1">
-                                <input type="date" name="issueDate" value={invoice.issueDate.split('T')[0]} onChange={e => setInvoice(prev => ({...prev, issueDate: new Date(e.target.value).toISOString()}))} required className="form-input" />
+                                <input 
+                                    type="date" 
+                                    name="issueDate" 
+                                    value={invoice.issueDate.split('T')[0]} 
+                                    onChange={handleDateChange}
+                                    required 
+                                    className="form-input" 
+                                />
                             </div>
                         </div>
                     </div>
@@ -244,15 +306,31 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                         <div className="card-body">
                              <div className="border-b border-slate-700 pb-4 mb-4">
                                 <div className="flex flex-wrap gap-3">
-                                    <select onChange={e => { if (e.target.value) { handleAddItem('service', e.target.value); e.target.value = ''; } }} className="form-select flex-1 min-w-[180px]">
+                                    <select 
+                                        onChange={(e: ChangeEvent<HTMLSelectElement>) => { 
+                                            if (e.target.value) { 
+                                                handleAddItem('service', e.target.value); 
+                                                e.target.value = ''; 
+                                            } 
+                                        }} 
+                                        className="form-select flex-1 min-w-[180px]"
+                                    >
                                         <option value="">+ Adicionar Serviço</option>
-                                        {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        {services.map((s: Service) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                     </select>
-                                    <select onChange={e => { if (e.target.value) { handleAddItem('part', e.target.value); e.target.value = ''; } }} className="form-select flex-1 min-w-[180px]">
+                                    <select 
+                                        onChange={(e: ChangeEvent<HTMLSelectElement>) => { 
+                                            if (e.target.value) { 
+                                                handleAddItem('part', e.target.value); 
+                                                e.target.value = ''; 
+                                            } 
+                                        }} 
+                                        className="form-select flex-1 min-w-[180px]"
+                                    >
                                         <option value="">+ Adicionar Peça</option>
-                                        {parts.map(p => (
-                                            <option key={p.id} value={p.id} disabled={p.quantity <= invoice.items.filter(i => i.itemId === p.id).reduce((sum, i) => sum + (parseInt(i.quantity as string) || 0), 0)}>
-                                                {p.name} (Stock: {p.quantity - invoice.items.filter(i => i.itemId === p.id).reduce((sum, i) => sum + (parseInt(i.quantity as string) || 0), 0)})
+                                        {parts.map((p: Part) => (
+                                            <option key={p.id} value={p.id} disabled={p.quantity <= invoice.items.filter((i: any) => i.itemId === p.id).reduce((sum: number, i: any) => sum + (parseInt(i.quantity as string) || 0), 0)}>
+                                                {p.name} (Stock: {p.quantity - invoice.items.filter((i: any) => i.itemId === p.id).reduce((sum: number, i: any) => sum + (parseInt(i.quantity as string) || 0), 0)})
                                             </option>
                                         ))}
                                     </select>
@@ -267,23 +345,45 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                                         <p>Nenhum item adicionado ainda.</p>
                                     </div>
                                 ) : (
-                                    invoice.items.map(item => (
+                                    invoice.items.map((item: any) => (
                                         <div key={item.id} className="flex flex-wrap items-center gap-2 p-2 bg-slate-800/50 rounded-lg">
                                             <div className="flex-auto min-w-[120px] mr-2">
                                                 <p className="font-semibold text-white truncate">{item.description}</p>
                                                 <span className={`text-xs px-1 py-0.5 rounded-full ${item.type === 'service' ? 'bg-blue-900/50 text-blue-300' : 'bg-green-900/50 text-green-300'}`}>{item.type}</span>
                                             </div>
                                             <div className="flex-shrink-0">
-                                                <input type="number" value={item.quantity} onChange={e => handleItemChange(item.id, 'quantity', e.target.value)} className="form-input text-center p-2 w-16" min="1" placeholder="Qtd."/>
+                                                <input 
+                                                    type="number" 
+                                                    value={item.quantity} 
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleItemChange(item.id, 'quantity', e.target.value)} 
+                                                    className="form-input text-center p-2 w-16" 
+                                                    min="1" 
+                                                    placeholder="Qtd."
+                                                />
                                             </div>
                                             <div className="flex-shrink-0">
-                                                <input type="number" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(item.id, 'unitPrice', e.target.value)} className="form-input text-right p-2 w-24" min="0" placeholder="Preço"/>
+                                                <input 
+                                                    type="number" 
+                                                    step="0.01" 
+                                                    value={item.unitPrice} 
+                                                    onChange={(e: ChangeEvent<HTMLInputElement>) => handleItemChange(item.id, 'unitPrice', e.target.value)} 
+                                                    className="form-input text-right p-2 w-24" 
+                                                    min="0" 
+                                                    placeholder="Preço"
+                                                />
                                             </div>
                                             <div className="flex-shrink-0 w-24 text-right font-semibold text-white">
                                                 {formatCurrency((parseFloat(String(item.quantity)) || 0) * (parseFloat(String(item.unitPrice)) || 0))}
                                             </div>
                                             <div className="flex-shrink-0">
-                                                <button type="button" onClick={() => handleRemoveItem(item.id)} className="btn-icon text-red-400 hover:bg-red-500/20" aria-label="Remover item">&times;</button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => handleRemoveItem(item.id)} 
+                                                    className="btn-icon text-red-400 hover:bg-red-500/20" 
+                                                    aria-label="Remover item"
+                                                >
+                                                    &times;
+                                                </button>
                                             </div>
                                         </div>
                                     ))
@@ -296,7 +396,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                     <div className="card">
                         <div className="card-header border-b border-slate-700"><h3>📝 Notas / Observações</h3></div>
                         <div className="card-body">
-                            <textarea name="description" value={invoice.description || ''} onChange={e => setInvoice(prev => ({...prev, description: e.target.value}))} placeholder="Adicione notas, observações ou informações importantes..." rows={3} className="form-textarea"/>
+                            <textarea 
+                                name="description" 
+                                value={invoice.description || ''} 
+                                onChange={handleDescriptionChange}
+                                placeholder="Adicione notas, observações ou informações importantes..." 
+                                rows={3} 
+                                className="form-textarea"
+                            />
                         </div>
                     </div>
                 </div>
@@ -309,8 +416,19 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             <div>
                                 <label className="form-label">Desconto</label>
                                 <div className="flex">
-                                    <input type="number" step="0.01" value={invoice.discount} onChange={e => setInvoice(prev => ({...prev, discount: e.target.value}))} placeholder="0.00" className="form-input rounded-r-none flex-1" />
-                                    <select value={invoice.discountType} onChange={e => setInvoice(prev => ({...prev, discountType: e.target.value as 'fixed' | 'percentage'}))} className="form-select rounded-l-none w-20">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        value={invoice.discount} 
+                                        onChange={handleDiscountChange}
+                                        placeholder="0.00" 
+                                        className="form-input rounded-r-none flex-1" 
+                                    />
+                                    <select 
+                                        value={invoice.discountType} 
+                                        onChange={handleDiscountTypeChange}
+                                        className="form-select rounded-l-none w-20"
+                                    >
                                         <option value="fixed">MT</option>
                                         <option value="percentage">%</option>
                                     </select>
@@ -318,7 +436,12 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({
                             </div>
                             {layoutSettings.taxEnabled && (
                                 <label className="flex items-center gap-3 cursor-pointer">
-                                    <input type="checkbox" checked={invoice.taxApplied} onChange={(e) => setInvoice(prev => ({...prev, taxApplied: e.target.checked}))} className="form-checkbox" />
+                                    <input 
+                                        type="checkbox" 
+                                        checked={invoice.taxApplied} 
+                                        onChange={handleTaxAppliedChange}
+                                        className="form-checkbox" 
+                                    />
                                     <span>Aplicar {layoutSettings.taxName} ({layoutSettings.taxRate}%)</span>
                                 </label>
                             )}
