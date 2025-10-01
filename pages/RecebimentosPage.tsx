@@ -20,7 +20,7 @@ interface ReceiptState {
     paymentMethod: string;
 }
 
-const ExtraReceiptForm = ({ item, onSave, onCancel, paymentMethods }: ExtraReceiptFormProps) => {
+export const ExtraReceiptForm = ({ item, onSave, onCancel, paymentMethods }: ExtraReceiptFormProps) => {
     const [receipt, setReceipt] = useState<ReceiptState>({
         description: item.description || '',
         amount: item.amount || 0,
