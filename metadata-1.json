@@ -1,0 +1,6 @@
+{
+  "name": "Fast Managment",
+  "description": "Uma aplicação web moderna para gestão de oficinas mecânicas chamada Fast Managment, com um assistente de diagnóstico alimentado por IA para ajudar a identificar problemas em veículos. Permite a gestão de peças, serviços, clientes, viaturas e faturação.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
