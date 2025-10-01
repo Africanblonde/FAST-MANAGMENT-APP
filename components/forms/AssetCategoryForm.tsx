@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AssetCategory, Permission } from '../types';
-import GenericManagementPage from '../components/GenericManagementPage';
+import GenericManagementPage from '../GenericManagementPage';
 
 interface AssetCategoriesPageProps {
     categories: AssetCategory[];
@@ -34,4 +34,4 @@ const AssetCategoriesPage = ({ categories, onAdd, onEdit, onDelete, hasPermissio
     );
 };
 
-export default AssetCategoriesPage;
+export default AssetCategoriesPage;    
