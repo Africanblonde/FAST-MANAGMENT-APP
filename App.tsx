@@ -1436,29 +1436,27 @@ const renderInvoiceViewCleanModal = (invoice: Invoice, isCollection: boolean) =>
     const renderPage = () => {
         switch (activePage) {
             case 'dashboard': return renderDashboard();
-            case 'ai_diagnostics': return <AIDiagnosticsPage />;
-            case 'invoices': return <InvoicingPage 
-                invoices={invoices}
-                clients={clients}
-                vehicles={vehicles}
+            case 'ai_diagnostics': return <AIDiagnosticsPage 
                 services={services}
                 parts={parts}
-                onSaveInvoice={handleSaveInvoice}
-                onDeleteInvoice={handleDeleteInvoice}
+            />;
+            case 'invoices': return <InvoicingPage 
+                invoices={invoices}
+                expenses={expenses}
+                onNewInvoice={() => openModal("Nova Fatura", renderInvoiceForm({}), '5xl')}
+                onEditInvoice={(id: string) => {
+                    const invoice = invoices.find((inv: Invoice) => inv.id === id);
+                    if (invoice) openModal("Editar Fatura", renderInvoiceForm(invoice), '5xl');
+                }}
                 onViewInvoice={handleOpenViewInvoiceModal}
+                onDeleteInvoice={handleDeleteInvoice}
+                onNewExpense={expenseHandlers.onAdd}
                 onRegisterPayment={handleOpenRegisterPaymentModal}
                 hasPermission={hasPermission}
-                activeUser={profile as User}
-                layoutSettings={layoutSettings}
-                suppliers={suppliers}
-                paymentMethods={paymentMethods}
-                purchases={purchases}
-                onSavePurchase={handleSavePurchase}
             />;
             case 'clients': return <ClientsPage 
                 clients={clients}
                 vehicles={vehicles}
-                invoices={invoices}
                 onAdd={clientHandlers.onAdd}
                 onEdit={clientHandlers.onEdit}
                 onDelete={clientHandlers.onDelete}
@@ -1514,15 +1512,19 @@ const renderInvoiceViewCleanModal = (invoice: Invoice, isCollection: boolean) =>
                 onDeletePaymentMethod={handleDeletePaymentMethod}
                 onLogoUpload={handleLogoUpload}
                 onLogoRemove={handleLogoRemove}
-                onExportData={handleExportData}
-                onImportData={handleImportData}
-                onResetDatabase={handleResetDatabase}
-                hasPermission={hasPermission}
-            />;
-            case 'permissions': return <PermissionsPage 
+                onExport={handleExportData}
+                onImport={handleImportData}
+                onReset={handleResetDatabase}
+                company={company}
+                license={license}
+                onActivationSuccess={handleLicenseActivation}
                 users={users}
                 roles={roles}
                 onAddUser={handleAddUser}
+                hasPermission={hasPermission}
+            />;
+            case 'permissions': return <PermissionsPage 
+                roles={roles}
                 onAdd={roleHandlers.onAdd}
                 onEdit={roleHandlers.onEdit}
                 onDelete={roleHandlers.onDelete}
