@@ -206,6 +206,9 @@ export const App: React.FC = () => {
     const [isImporting, setIsImporting] = useState(false);
     const [importStatus, setImportStatus] = useState('');
     
+    // User creation state
+    const [isCreatingUser, setIsCreatingUser] = useState(false);
+    
     // --- Initial Load & Auth Listener ---
     const loadInitialData = useCallback(async (currentSession: Session) => {
         if (!currentSession?.user) return;
@@ -335,6 +338,11 @@ export const App: React.FC = () => {
             }
 
             const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+                // Ignorar mudanças de auth durante a criação de usuários
+                if (isCreatingUser) {
+                    return;
+                }
+                
                 setSession(session);
                 
                 if (_event === 'PASSWORD_RECOVERY') {
@@ -694,27 +702,21 @@ export const App: React.FC = () => {
         if (!data.roleId) return { success: false, message: "Por favor, selecione um perfil para o utilizador." };
 
         try {
-            // Criar um cliente Supabase separado para não interferir com a sessão atual
-            const { createClient } = await import('@supabase/supabase-js');
-            const adminSupabase = createClient(
-                import.meta.env.VITE_SUPABASE_URL,
-                import.meta.env.VITE_SUPABASE_ANON_KEY
-            );
-
-            const { error } = await adminSupabase.auth.signUp({
-                email: data.email,
-                password: data.password,
-                options: {
-                    data: {
-                        name: data.name,
-                        company_id: company.id,
-                        role_id: data.roleId,
-                    },
-                    emailRedirectTo: `${window.location.origin}/login`,
-                }
+            // Usar uma função RPC no servidor para criar o usuário sem afetar a sessão atual
+            const { data: result, error } = await supabase.rpc('create_user_invite', {
+                user_email: data.email,
+                user_password: data.password,
+                user_name: data.name,
+                user_company_id: company.id,
+                user_role_id: data.roleId,
+                redirect_url: `${window.location.origin}/login`
             });
 
             if (error) {
+                // Fallback para o método original se a função RPC não existir
+                if (error.code === '42883') { // Function does not exist
+                    return await handleAddUserFallback(data);
+                }
                 return { success: false, message: `Erro ao criar utilizador: ${error.message}` };
             }
 
@@ -726,6 +728,42 @@ export const App: React.FC = () => {
 
             return { success: true, message: "Convite enviado! O novo utilizador receberá um email de confirmação para ativar a sua conta." };
         } catch (error: any) {
+            return { success: false, message: `Erro inesperado: ${error.message}` };
+        }
+    };
+
+    // Função de fallback usando método original mas com melhor isolamento
+    const handleAddUserFallback = async (data: { name: string, email: string, password: string, roleId: string }): Promise<{ success: boolean, message: string }> => {
+        try {
+            // Marcar que estamos criando um usuário para ignorar mudanças de auth
+            setIsCreatingUser(true);
+            
+            const { error } = await supabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        name: data.name,
+                        company_id: company!.id,
+                        role_id: data.roleId,
+                    },
+                    emailRedirectTo: `${window.location.origin}/login`,
+                }
+            });
+
+            if (error) {
+                setIsCreatingUser(false);
+                return { success: false, message: `Erro ao criar utilizador: ${error.message}` };
+            }
+
+            // Aguardar um pouco e depois reativar o listener
+            setTimeout(() => {
+                setIsCreatingUser(false);
+            }, 3000);
+
+            return { success: true, message: "Convite enviado! O novo utilizador receberá um email de confirmação para ativar a sua conta." };
+        } catch (error: any) {
+            setIsCreatingUser(false);
             return { success: false, message: `Erro inesperado: ${error.message}` };
         }
     };
