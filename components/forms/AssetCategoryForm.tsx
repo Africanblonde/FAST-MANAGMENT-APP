@@ -34,4 +34,4 @@ const AssetCategoriesPage = ({ categories, onAdd, onEdit, onDelete, hasPermissio
     );
 };
 
-export default AssetCategoriesPage;    
+export default AssetCategoriesPage;

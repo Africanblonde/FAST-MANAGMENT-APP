@@ -1435,7 +1435,99 @@ const renderInvoiceViewCleanModal = (invoice: Invoice, isCollection: boolean) =>
 
     const renderPage = () => {
         switch (activePage) {
-            // ... outros cases ...
+            case 'dashboard': return renderDashboard();
+            case 'ai_diagnostics': return <AIDiagnosticsPage />;
+            case 'invoices': return <InvoicingPage 
+                invoices={invoices}
+                clients={clients}
+                vehicles={vehicles}
+                services={services}
+                parts={parts}
+                onSaveInvoice={handleSaveInvoice}
+                onDeleteInvoice={handleDeleteInvoice}
+                onViewInvoice={handleOpenViewInvoiceModal}
+                onRegisterPayment={handleOpenRegisterPaymentModal}
+                hasPermission={hasPermission}
+                activeUser={profile as User}
+                layoutSettings={layoutSettings}
+                suppliers={suppliers}
+                paymentMethods={paymentMethods}
+                purchases={purchases}
+                onSavePurchase={handleSavePurchase}
+            />;
+            case 'clients': return <ClientsPage 
+                clients={clients}
+                vehicles={vehicles}
+                invoices={invoices}
+                onAdd={clientHandlers.onAdd}
+                onEdit={clientHandlers.onEdit}
+                onDelete={clientHandlers.onDelete}
+                onViewFinancials={setViewingClientFinancials}
+                hasPermission={hasPermission}
+            />;
+            case 'vehicles': return <VehiclesPage 
+                vehicles={vehicles}
+                clients={clients}
+                onAdd={vehicleHandlers.onAdd}
+                onEdit={vehicleHandlers.onEdit}
+                onDelete={vehicleHandlers.onDelete}
+                hasPermission={hasPermission}
+            />;
+            case 'services': return <ServicesPage 
+                services={services}
+                onAdd={serviceHandlers.onAdd}
+                onEdit={serviceHandlers.onEdit}
+                onDelete={serviceHandlers.onDelete}
+                hasPermission={hasPermission}
+            />;
+            case 'parts': return <PartsPage 
+                parts={parts}
+                suppliers={suppliers}
+                onAdd={partHandlers.onAdd}
+                onEdit={partHandlers.onEdit}
+                onDelete={partHandlers.onDelete}
+                hasPermission={hasPermission}
+            />;
+            case 'employees': return <EmployeesPage 
+                employees={employees}
+                salaryAdvances={salaryAdvances}
+                onAdd={employeeHandlers.onAdd}
+                onEdit={employeeHandlers.onEdit}
+                onDelete={employeeHandlers.onDelete}
+                onAddSalaryAdvance={(employeeId: string) => openModal("Novo Adiantamento", <SalaryAdvanceForm employeeId={employeeId} employees={employees} onSave={handleSaveSalaryAdvance} onCancel={closeModal} />)}
+                hasPermission={hasPermission}
+            />;
+            case 'expenses': return <ExpensesPage 
+                expenses={expenses}
+                paymentMethods={paymentMethods}
+                onAdd={expenseHandlers.onAdd}
+                onEdit={expenseHandlers.onEdit}
+                onDelete={expenseHandlers.onDelete}
+                hasPermission={hasPermission}
+            />;
+            case 'settings': return <SettingsPage 
+                layoutSettings={layoutSettings}
+                paymentMethods={paymentMethods}
+                logoUrl={logoUrl}
+                onSaveLayoutSettings={handleSaveLayoutSettings}
+                onSavePaymentMethod={handleSavePaymentMethod}
+                onDeletePaymentMethod={handleDeletePaymentMethod}
+                onLogoUpload={handleLogoUpload}
+                onLogoRemove={handleLogoRemove}
+                onExportData={handleExportData}
+                onImportData={handleImportData}
+                onResetDatabase={handleResetDatabase}
+                hasPermission={hasPermission}
+            />;
+            case 'permissions': return <PermissionsPage 
+                users={users}
+                roles={roles}
+                onAddUser={handleAddUser}
+                onAdd={roleHandlers.onAdd}
+                onEdit={roleHandlers.onEdit}
+                onDelete={roleHandlers.onDelete}
+                hasPermission={hasPermission}
+            />;
             case 'suppliers': return <SuppliersPage 
                 suppliers={suppliers} 
                 purchases={purchases} 
