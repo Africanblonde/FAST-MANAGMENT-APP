@@ -693,29 +693,41 @@ export const App: React.FC = () => {
         if (users.length >= 4) return { success: false, message: "A sua licença permite um máximo de 4 utilizadores." };
         if (!data.roleId) return { success: false, message: "Por favor, selecione um perfil para o utilizador." };
 
-        const { error } = await supabase.auth.signUp({
-            email: data.email,
-            password: data.password,
-            options: {
-                data: {
-                    name: data.name,
-                    company_id: company.id,
-                    role_id: data.roleId,
-                },
-                emailRedirectTo: window.location.origin,
+        try {
+            // Criar um cliente Supabase separado para não interferir com a sessão atual
+            const { createClient } = await import('@supabase/supabase-js');
+            const adminSupabase = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY
+            );
+
+            const { error } = await adminSupabase.auth.signUp({
+                email: data.email,
+                password: data.password,
+                options: {
+                    data: {
+                        name: data.name,
+                        company_id: company.id,
+                        role_id: data.roleId,
+                    },
+                    emailRedirectTo: `${window.location.origin}/login`,
+                }
+            });
+
+            if (error) {
+                return { success: false, message: `Erro ao criar utilizador: ${error.message}` };
             }
-        });
 
-        if (error) {
-            return { success: false, message: `Erro ao criar utilizador: ${error.message}` };
+            // Atualizar a lista de usuários após um pequeno delay
+            setTimeout(async () => {
+                const { data: usersData } = await supabase.from('profiles').select('*').eq('company_id', company.id);
+                if (usersData) setUsers(usersData);
+            }, 2000);
+
+            return { success: true, message: "Convite enviado! O novo utilizador receberá um email de confirmação para ativar a sua conta." };
+        } catch (error: any) {
+            return { success: false, message: `Erro inesperado: ${error.message}` };
         }
-
-        setTimeout(async () => {
-            const { data: usersData } = await supabase.from('profiles').select('*').eq('company_id', company.id);
-            if (usersData) setUsers(usersData);
-        }, 2000);
-
-        return { success: true, message: "Convite enviado! O novo utilizador receberá um email de confirmação para ativar a sua conta." };
     };
 
     // FIX: Using `any` for stateSetter to resolve "Type instantiation is excessively deep" error.
