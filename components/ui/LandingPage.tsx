@@ -1,9 +1,129 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { ViewMode } from '../../App';
 import { ICONS } from '../../constants';
 import LanguageSelector from '../LanguageSelector';
 import CurrencySelector from '../CurrencySelector';
 import { useCurrency } from '../../contexts/CurrencyContext';
+
+// Componente Countdown Timer
+const CountdownTimer = () => {
+  const [daysLeft, setDaysLeft] = useState(4);
+  const [hoursLeft, setHoursLeft] = useState(0);
+  const [minutesLeft, setMinutesLeft] = useState(0);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  useEffect(() => {
+    // Verificar se já existe uma data de início no localStorage
+    const startDate = localStorage.getItem('previewStartDate');
+    
+    if (!startDate) {
+      // Se não existe, definir a data atual como data de início
+      const now = new Date().toISOString();
+      localStorage.setItem('previewStartDate', now);
+    }
+
+    const calculateTimeLeft = () => {
+      const start = new Date(startDate || new Date().toISOString());
+      const now = new Date();
+      
+      // Calcular a diferença em milissegundos
+      const difference = now.getTime() - start.getTime();
+      
+      // Calcular dias, horas, minutos e segundos restantes
+      const totalSeconds = Math.max(0, 4 * 24 * 60 * 60 - Math.floor(difference / 1000));
+      
+      const days = Math.floor(totalSeconds / (24 * 60 * 60));
+      const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / (60 * 60));
+      const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+      const seconds = totalSeconds % 60;
+      
+      setDaysLeft(days);
+      setHoursLeft(hours);
+      setMinutesLeft(minutes);
+      setSecondsLeft(seconds);
+    };
+
+    // Calcular imediatamente
+    calculateTimeLeft();
+
+    // Atualizar a cada segundo
+    const timer = setInterval(calculateTimeLeft, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  if (daysLeft <= 0 && hoursLeft <= 0 && minutesLeft <= 0 && secondsLeft <= 0) {
+    return (
+      <div style={{
+        background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)',
+        color: 'white',
+        padding: '1rem',
+        textAlign: 'center',
+        margin: '1rem 0',
+        borderRadius: '8px',
+        border: '1px solid #ff7979',
+        boxShadow: '0 4px 6px rgba(255, 107, 107, 0.3)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>⏰ Período de Pré-visualização Expirado!</span>
+          <span>Faça upgrade para premium e continue aproveitando nossos serviços.</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      padding: '1rem',
+      textAlign: 'center',
+      margin: '1rem 0',
+      borderRadius: '8px',
+      border: '1px solid #7e8ce0',
+      boxShadow: '0 4px 6px rgba(102, 126, 234, 0.3)'
+    }}>
+      <div style={{ marginBottom: '0.5rem' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>⏳ Oferta por Tempo Limitado: </span>
+        <span>Você tem apenas <strong>{daysLeft} dias</strong> de pré-visualização gratuita!</span>
+      </div>
+      
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.2)', padding: '0.5rem', borderRadius: '4px', minWidth: '50px' }}>
+            {daysLeft.toString().padStart(2, '0')}
+          </div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Dias</div>
+        </div>
+        
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.2)', padding: '0.5rem', borderRadius: '4px', minWidth: '50px' }}>
+            {hoursLeft.toString().padStart(2, '0')}
+          </div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Horas</div>
+        </div>
+        
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.2)', padding: '0.5rem', borderRadius: '4px', minWidth: '50px' }}>
+            {minutesLeft.toString().padStart(2, '0')}
+          </div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Minutos</div>
+        </div>
+        
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'rgba(255,255,255,0.2)', padding: '0.5rem', borderRadius: '4px', minWidth: '50px' }}>
+            {secondsLeft.toString().padStart(2, '0')}
+          </div>
+          <div style={{ fontSize: '0.75rem', opacity: 0.9 }}>Segundos</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+        <strong>Não perca esta oportunidade!</strong> Faça upgrade para premium, compre créditos e desfrute do melhor servidor do mercado.
+      </div>
+    </div>
+  );
+};
 
 // Interface para FeatureCard
 interface FeatureCardProps {
@@ -221,8 +341,13 @@ const LandingPage = (props: LandingPageProps) => {
       </header>
 
       <main>
+        {/* Countdown Timer Section - ADICIONADO */}
+        <div style={{ marginTop: '70px' }}>
+          <CountdownTimer />
+        </div>
+
         {/* Hero Section */}
-        <section style={{padding: '10rem 0 5rem 0', textAlign: 'center'}}>
+        <section style={{padding: '5rem 0 5rem 0', textAlign: 'center'}}>
           <div style={{maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem'}}>
             <h2 style={{
               fontSize: 'clamp(2.5rem, 5vw, 3.75rem)', 
@@ -293,7 +418,7 @@ const LandingPage = (props: LandingPageProps) => {
           </div>
         </section>
 
-        {/* Pricing Section - CORRIGIDA */}
+        {/* Pricing Section */}
         <section id="precos" style={{padding: '5rem 0'}}>
           <div style={{maxWidth: '1280px', margin: '0 auto', padding: '0 1.5rem'}}>
             <div style={{textAlign: 'center', marginBottom: '3rem'}}>
